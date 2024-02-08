@@ -1,0 +1,31 @@
+{
+  "name": "zecrawler-backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Léo",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.2",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.2",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mercadopago": "^2.0.7",
+    "moment": "^2.30.1",
+    "mongoose": "^8.1.0",
+    "nodemailer": "^6.9.9",
+    "superagent": "^8.1.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.23.9",
+    "@babel/core": "^7.23.9",
+    "nodemon": "^3.0.3"
+  }
+}

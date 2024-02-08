@@ -1,0 +1,28 @@
+import express from 'express';
+
+
+import LinkController from './controllers/LinkController.js'
+import UserController from './controllers/UserController.js';
+import verifyJWT from './middleware/authMiddleware.js'
+
+const routes = express.Router();
+
+routes.get("/",  (req, res) => {
+    res.json({status : new Date()});
+});
+routes.get("/healthz",  (req, res) => {
+    res.status(200).json({status : 'ok'});
+});
+
+routes.get("/links",verifyJWT.isTokenized, LinkController.index);
+routes.get("/links/update", verifyJWT.isTokenized, LinkController.update);
+routes.post("/links", verifyJWT.isTokenized, LinkController.store);
+routes.post("/list/ml", LinkController.storeList);
+routes.delete("/links/:sku",verifyJWT.isTokenized,  LinkController.destroy);
+
+routes.post("/login", UserController.login);
+routes.post("/register", UserController.register);
+
+
+
+export default routes;
