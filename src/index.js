@@ -2,10 +2,15 @@ import express from "express";
 import 'dotenv/config'
 import mongoose from 'mongoose';
 import cors from 'cors';
-
+import { engine } from 'express-handlebars';
 import routes from './routes.js';
 
 const app = express();
+
+app.engine('handlebars', engine());
+app.set('view engine', 'handlebars');
+app.set('views', './views');
+
 
 mongoose.connect(
   `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_STRING}?retryWrites=true&w=majority`,

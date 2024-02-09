@@ -18,8 +18,6 @@ routes.get("/healthz",  async (req, res) => {
     })    
 });
 
-
-
 routes.get("/send",verifyJWT.isTokenized, MailController.index);
 
 routes.get("/links",verifyJWT.isTokenized, LinkController.index);
