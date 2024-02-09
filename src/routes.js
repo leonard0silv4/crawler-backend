@@ -19,10 +19,7 @@ routes.get("/",  (req, res) => {
 
 routes.get("/healthz",  async (req, res) => {
 
-    const user = {
-        name : 'Gabriela Silva',
-        email : 'agabzinha.silva@gmail.com'
-    }
+
 
 
     let transporter = nodemailer.createTransport({
@@ -47,8 +44,8 @@ routes.get("/healthz",  async (req, res) => {
 
 
       const mailOptions = {
-        from: '"Leonardo R." <leo07vasp@gmail.com>', // sender address
-        template: "email", // the name of the template file, i.e., email.handlebars
+        from: '"Leonardo R." <leo07vasp@gmail.com>', 
+        template: "email", 
         to: user.email,
         subject: `Welcome to My Company, ${user.name}`,
         context: {
