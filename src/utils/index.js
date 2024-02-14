@@ -1,5 +1,6 @@
 import superagent from 'superagent'
-import  cheerio  from 'cheerio';
+import * as cheerio from 'cheerio';
+
 import Link from '../models/Link.js';
 
 export default {
@@ -19,7 +20,7 @@ export default {
         const parts = $(value).attr("href").split('#');
         linksArray.push(parts[0])
       })
-      console.log("🚀 ~ extractLinks ~ linksArray:", linksArray);
+      console.log("🚀 ~ extractLinks ~ linksArray qtd:", linksArray?.length);
       return linksArray;
     } catch (err) {
       console.log(err);
@@ -37,14 +38,42 @@ export default {
           response: 5000,
           deadline: 10000,
         });
-
+        
+        
         
         const $ = cheerio.load(response.text);
-        const jsonRaw = $("script[type='application/ld+json']")[0].children[0]
-          .data;
+        const jsonRaw = $("script[type='application/ld+json']")[0].children[0].data;
+
+        const seller = $('div.ui-pdp-seller__link-trigger.non-selectable').text();
+        let time;
+        
+        $('script').each((index, element) => {
+          const scriptContent = $(element).html();
+           if (scriptContent.includes('initialState')) {
+          
+             const start = scriptContent?.indexOf('translations') -2;
+
+             const end = scriptContent.lastIndexOf('cpCookie') + 16;
+
+             
+             const preloadedStateJson = scriptContent.slice(start, end);
+             try{
+              const preloadedState = JSON.parse(preloadedStateJson);
+              time = preloadedState.initialState?.track?.gtm_event?.startTime
+            }catch(e){
+              console.log(e)
+            }
+          }
+        });
+
+
         const result = JSON.parse(jsonRaw);
 
-        return result;
+        return {
+          ...result, 
+          seller : seller ?? '',
+          dateMl : time ?? ''
+        };
       } catch (error) {
         tentativaAtual++;
         await new Promise((resolve) => setTimeout(resolve, 1000));

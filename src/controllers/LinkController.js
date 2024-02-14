@@ -1,21 +1,23 @@
 import Link from "../models/Link.js";
-import verifyToken from '../middleware/authMiddleware.js'
+import verifyToken from "../middleware/authMiddleware.js";
 import UtilsController from "../utils/index.js";
 
-
-
-export default  {
+export default {
   async store(req, res) {
     try {
-      const { link } = req.body;
-
+      const { link, myPrice } = req.body;
       const {
         sku,
         name,
         offers: { availability: status, price },
         image,
+        seller,
+        dateMl,
       } = await UtilsController.getDataWithRetry(link);
-      const dataLink = await Link.findOne({ sku: sku, uid: verifyToken.recoverUid(req, res) });
+      const dataLink = await Link.findOne({
+        sku: sku,
+        uid: verifyToken.recoverUid(req, res),
+      });
 
       if (dataLink == undefined) {
         const dataAdded = await Link.create({
@@ -23,10 +25,13 @@ export default  {
           link,
           name,
           status,
+          seller,
+          dateMl,
+          myPrice: Number(myPrice),
           nowPrice: Number(price),
           lastPrice: Number(price),
           image,
-          uid : verifyToken.recoverUid(req, res)
+          uid: verifyToken.recoverUid(req, res),
         });
         return res.json(dataAdded);
       }
@@ -61,39 +66,64 @@ export default  {
 
   async storeList(req, res) {
     const links = await UtilsController.extractLinks(req.body.link);
-
+    const { myPrice } = req.body;
     if (!links) res.end();
 
     try {
       for (let i = 0; i < links.length; i++) {
-        
         const result = await UtilsController.getDataWithRetry(links[i]);
 
         const {
           sku,
           name,
           image,
-          offers: {
-            availability: status = "OutOfStock",
-            price = 0,
-          } = {},
+          seller,
+          dateMl,
+          offers: { availability: status = "OutOfStock", price = 0 } = {},
         } = result || {};
 
-
         const dataLink = await Link.findOne({ link: links[i] });
-        
-        if (!dataLink  && name && image) {
-          console.log("Link não encontrado, criando novo...");
+
+        if (!dataLink && name && image) {
+          console.log(i, "Link não encontrado, criando novo...");
           await Link.create({
             sku,
             link: links[i],
             name,
             status,
+            seller,
+            dateMl,
+            myPrice: Number(myPrice),
             nowPrice: Number(price),
             lastPrice: Number(price),
             image,
+            uid: verifyToken.recoverUid(req, res),
           });
-        } 
+        } else {
+          const priceUpdate = {
+            nowPrice: dataLink.nowPrice,
+            lastPrice: dataLink.lastPrice,
+          };
+
+          if (dataLink.nowPrice != price) {
+            priceUpdate.lastPrice = dataLink.nowPrice;
+            priceUpdate.nowPrice = price;
+          }
+
+          await Link.findOneAndUpdate(
+            { _id: dataLink._id, uid: verifyToken.recoverUid(req, res) },
+            {
+              $set: {
+                status: status,
+                nowPrice: priceUpdate.nowPrice,
+                lastPrice: priceUpdate.lastPrice,
+                myPrice: myPrice,
+              },
+            }
+          ).then((obj) => {
+            console.log("Link já existe...", i, dataLink.name, "atualizado...");
+          });
+        }
       }
     } catch (error) {
       console.error("Erro durante a inserção da lista de links", error);
@@ -106,13 +136,9 @@ export default  {
   async index(req, res) {
     const { page, perPage } = req.query;
 
-    // const links = await Link.find().skip(perPage * (page-1)).limit(perPage);
-    // const count = await Link.find().count();
-    // return res.json({links, size :count});
-
     try {
       const links = await Link.aggregate([
-        { $match: {uid: verifyToken.recoverUid(req, res)}},
+        { $match: { uid: verifyToken.recoverUid(req, res) } },
         {
           $facet: {
             metadata: [{ $count: "totalCount" }],
@@ -139,7 +165,9 @@ export default  {
   },
 
   async update(req, res) {
-    const dataLink = await Link.find({uid: verifyToken.recoverUid(req, res)}).sort({ created_at: -1 });
+    const dataLink = await Link.find({
+      uid: verifyToken.recoverUid(req, res),
+    }).sort({ created_at: -1 });
 
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -153,6 +181,8 @@ export default  {
           offers: {
             availability: status = "OutOfStock",
             price = Number(dataLink[i].nowPrice),
+            seller,
+            dateMl,
           } = {},
         } = result || {};
 
@@ -162,16 +192,18 @@ export default  {
           status: dataLink[i].status,
           nowPrice: dataLink[i].nowPrice,
           lastPrice: dataLink[i].lastPrice,
+          seller,
+          dateMl,
         };
 
-        if (Number(dataLink[i].nowPrice) != price ) {
+        if (Number(dataLink[i].nowPrice) != price) {
           asUpdate.lastPrice = dataLink[i].nowPrice;
           asUpdate.nowPrice = price;
           res.write(`data: ${JSON.stringify(asUpdate)}\n\n`);
         }
 
         await Link.findOneAndUpdate(
-          { _id: dataLink[i]._id, uid : verifyToken.recoverUid(req, res) },
+          { _id: dataLink[i]._id, uid: verifyToken.recoverUid(req, res) },
           {
             $set: {
               nowPrice: asUpdate.nowPrice,
@@ -198,5 +230,3 @@ export default  {
     res.end();
   },
 };
-
-

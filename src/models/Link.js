@@ -7,9 +7,12 @@ const LinkSchema = new mongoose.Schema(
     link: String,
     name: String,
     status: String,
+    myPrice : Number,
     nowPrice: Number,
     lastPrice: Number,
     image: String,
+    seller: String,
+    dateMl: Date,
     uid: String
   },
   {
