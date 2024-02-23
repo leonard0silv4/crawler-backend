@@ -65,8 +65,9 @@ export default {
   },
 
   async storeList(req, res) {
-    const links = await UtilsController.extractLinks(req.body.link);
     const { myPrice } = req.body;
+    console.log(myPrice);
+    const links = await UtilsController.extractLinks(req.body.link);
     if (!links) res.end();
 
     try {
@@ -105,7 +106,7 @@ export default {
             lastPrice: dataLink.lastPrice,
           };
 
-          if (dataLink.nowPrice != price) {
+          if (dataLink.nowPrice != price && price !== 0) {
             priceUpdate.lastPrice = dataLink.nowPrice;
             priceUpdate.nowPrice = price;
           }

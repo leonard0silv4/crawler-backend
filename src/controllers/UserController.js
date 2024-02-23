@@ -12,8 +12,8 @@ export default {
       if (!user)
         return res.status(401).json({ error: "Usuário não encontrado" });
 
-      if (moment(user.expiries_at).format() < moment().format())
-        return res.status(440).json({ error: "Assinatura expirada" });
+      // if (moment(user.expiries_at).format() < moment().format())
+      //   return res.status(440).json({ error: "Assinatura expirada" });
 
       const passwordMatch = await bcrypt.compare(password, user.password);
       if (!passwordMatch)
