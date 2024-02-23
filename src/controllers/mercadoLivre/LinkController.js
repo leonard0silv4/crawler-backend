@@ -1,6 +1,6 @@
-import Link from "../models/Link.js";
-import verifyToken from "../middleware/authMiddleware.js";
-import UtilsController from "../utils/index.js";
+import Link from "../../models/Link.js";
+import verifyToken from "../../middleware/authMiddleware.js";
+import UtilsController from "../../utils/index.js";
 
 export default {
   async store(req, res) {
@@ -63,10 +63,11 @@ export default {
       return res.status(500).end();
     }
   },
+  
 
   async storeList(req, res) {
     const { myPrice } = req.body;
-    console.log(myPrice);
+    
     const links = await UtilsController.extractLinks(req.body.link);
     if (!links) res.end();
 
@@ -163,6 +164,22 @@ export default {
     } catch (error) {
       return res.status(500).end();
     }
+  },
+
+  async updateOne(req, res){
+
+    const {id, myPrice} = req.body
+
+    await Link.findOneAndUpdate(
+      { _id: id, uid: verifyToken.recoverUid(req, res) },
+      {
+        $set: {
+          myPrice: myPrice,
+        },
+      }
+    )
+
+    return res.status(200).end();
   },
 
   async update(req, res) {
