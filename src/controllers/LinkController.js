@@ -181,7 +181,7 @@ export default {
         const {
           offers: {
             availability: status = "OutOfStock",
-            price = Number(dataLink[i].nowPrice),
+            price,
             seller,
             dateMl,
           } = {},
