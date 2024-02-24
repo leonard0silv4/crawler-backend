@@ -1,5 +1,7 @@
 import superagent from 'superagent'
 import * as cheerio from 'cheerio';
+import puppeteer from 'puppeteer';
+ 
 
 import Link from '../models/Link.js';
 
@@ -45,32 +47,22 @@ export default {
         
         const $ = cheerio.load(response.text);
         const jsonRaw = $("script[type='application/ld+json']")[0].children[0].data;
-
         const seller = $('div.ui-pdp-seller__link-trigger.non-selectable').text();
         let time;
         
-        $('script').each((index, element) => {
-          const scriptContent = $(element).html();
-           if (scriptContent.includes('initialState')) {
+        await (async () => {
+          const browser = await puppeteer.launch();
+          const page = await browser.newPage();
+          await page.goto(url);
+                  
+          time = await page.evaluate(() => {
+            return window.__PRELOADED_STATE__.initialState?.track?.gtm_event?.startTime;
+          });
           
-             const start = scriptContent?.indexOf('translations') -2;
-
-             const end = scriptContent.lastIndexOf('cpCookie') + 16;
-
-             
-             const preloadedStateJson = scriptContent.slice(start, end);
-             try{
-              const preloadedState = JSON.parse(preloadedStateJson);
-              time = preloadedState.initialState?.track?.gtm_event?.startTime
-            }catch(e){
-              console.log(":bug: 65 ~ $ ~ e:", e);
-            }
-          }
-        });
-
+          await browser.close();
+        })();
 
         const result = JSON.parse(jsonRaw);
-
         
         return {
           ...result, 
