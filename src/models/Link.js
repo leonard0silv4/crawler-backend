@@ -13,7 +13,8 @@ const LinkSchema = new mongoose.Schema(
     image: String,
     seller: String,
     dateMl: Date,
-    uid: String
+    uid: String,
+    storeName: String,
   },
   {
     toJSON: {

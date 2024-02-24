@@ -28,6 +28,7 @@ routes.post("/links", verifyJWT.isTokenized, LinkController.store);
 routes.put("/links", verifyJWT.isTokenized, LinkController.updateOne);
 routes.post("/list/ml", LinkController.storeList);
 routes.delete("/links/:sku",verifyJWT.isTokenized,  LinkController.destroy);
+routes.post("/links/clearRates",verifyJWT.isTokenized, LinkController.clearRate);
 
 routes.post("/login", UserController.login);
 routes.post("/register", UserController.register);

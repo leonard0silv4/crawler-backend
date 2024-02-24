@@ -29,7 +29,9 @@ export default {
       
   },
 
+
   async getDataWithRetry(url, maxRetries = 5) {
+
     let tentativaAtual = 1;
     
     while (tentativaAtual <= maxRetries) {
@@ -43,7 +45,7 @@ export default {
         
         const $ = cheerio.load(response.text);
         const jsonRaw = $("script[type='application/ld+json']")[0].children[0].data;
-        
+
         const seller = $('div.ui-pdp-seller__link-trigger.non-selectable').text();
         let time;
         
@@ -61,9 +63,7 @@ export default {
               const preloadedState = JSON.parse(preloadedStateJson);
               time = preloadedState.initialState?.track?.gtm_event?.startTime
             }catch(e){
-
               console.log(":bug: 65 ~ $ ~ e:", e);
-              
             }
           }
         });
@@ -71,17 +71,18 @@ export default {
 
         const result = JSON.parse(jsonRaw);
 
+        
         return {
           ...result, 
           seller : seller ?? '',
-          dateMl : time ?? ''
+          dateMl : time ?? '',
+          storeName : 'mercadoLivre'
         };
       } catch (error) {
 
-        console.log("🚀 ~ getDataWithRetry ~ error:", error);
+        console.log("🚀 84: ~ getDataWithRetry ~ error:", error);
         tentativaAtual++;
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        
         return await Link.find({ link: url });
       }
     }

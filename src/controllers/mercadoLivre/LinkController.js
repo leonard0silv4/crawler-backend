@@ -63,11 +63,10 @@ export default {
       return res.status(500).end();
     }
   },
-  
 
   async storeList(req, res) {
     const { myPrice } = req.body;
-    
+
     const links = await UtilsController.extractLinks(req.body.link);
     if (!links) res.end();
 
@@ -166,9 +165,8 @@ export default {
     }
   },
 
-  async updateOne(req, res){
-
-    const {id, myPrice} = req.body
+  async updateOne(req, res) {
+    const { id, myPrice } = req.body;
 
     await Link.findOneAndUpdate(
       { _id: id, uid: verifyToken.recoverUid(req, res) },
@@ -177,7 +175,7 @@ export default {
           myPrice: myPrice,
         },
       }
-    )
+    );
 
     return res.status(200).end();
   },
@@ -196,14 +194,10 @@ export default {
         const result = await UtilsController.getDataWithRetry(dataLink[i].link);
 
         const {
-          offers: {
-            availability: status = "OutOfStock",
-            price,
-            seller,
-            dateMl,
-          } = {},
+          seller,
+          dateMl,
+          offers: { availability: status = "OutOfStock", price } = {},
         } = result || {};
-
         const asUpdate = {
           sku: dataLink[i].sku,
           name: dataLink[i].name,
@@ -214,7 +208,7 @@ export default {
           dateMl,
         };
 
-        if (Number(dataLink[i].nowPrice) != price) {
+        if (price && Number(dataLink[i].nowPrice) != Number(price)) {
           asUpdate.lastPrice = dataLink[i].nowPrice;
           asUpdate.nowPrice = price;
           res.write(`data: ${JSON.stringify(asUpdate)}\n\n`);
@@ -241,10 +235,24 @@ export default {
     res.end();
   },
 
-  show() {},
   async destroy(req, res) {
     const { sku } = req.params;
     await Link.deleteOne({ sku: sku, uid: verifyToken.recoverUid(req, res) });
+    res.end();
+  },
+
+  async clearRate(req, res) {
+    Link.updateMany({ uid: verifyToken.recoverUid(req, res) }, [
+      { $set: { lastPrice: "$nowPrice" } },
+    ])
+      .then((result) => {
+        res.status(200).end();
+
+      })
+      .catch((err) => {
+        console.error("Error updating documents:", err);
+      });
+
     res.end();
   },
 };
