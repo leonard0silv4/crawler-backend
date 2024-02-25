@@ -49,26 +49,26 @@ export default {
         const jsonRaw = $("script[type='application/ld+json']")[0].children[0].data;
         const seller = $('div.ui-pdp-seller__link-trigger.non-selectable').text();
         const buyActive = $('[formaction="https://www.mercadolivre.com.br/gz/checkout/buy"]').length
-        console.log(buyActive)
         let time;
         
         await (async () => {
           const browser = await puppeteer.launch();
           const page = await browser.newPage();
           await page.goto(url);
-                  
+          
           time = await page.evaluate(() => {
             return window.__PRELOADED_STATE__.initialState?.track?.gtm_event?.startTime;
           });
           
           await browser.close();
         })();
-
+        
         const result = JSON.parse(jsonRaw);
         
-        if(buyActive == 0) result.offers.availability = 'OutOfStock'
+        // console.log('buyActive',  buyActive)
+        // console.log('search', result)
+        // if(buyActive == 0) result.offers.availability = 'OutOfStock'
 
-        console.log(result)
         return {
           ...result, 
           seller : seller ?? '',

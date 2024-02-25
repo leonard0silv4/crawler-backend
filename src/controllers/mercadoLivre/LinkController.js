@@ -196,12 +196,12 @@ export default {
         const {
           seller,
           dateMl,
-          offers: { availability: status = "OutOfStock", price } = {},
+          offers: { availability: status, price } = {},
         } = result || {};
         const asUpdate = {
           sku: dataLink[i].sku,
           name: dataLink[i].name,
-          status: status,
+          status: status ?? dataLink[i].status,
           nowPrice: dataLink[i].nowPrice,
           lastPrice: dataLink[i].lastPrice,
           seller,
