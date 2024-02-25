@@ -201,7 +201,7 @@ export default {
         const asUpdate = {
           sku: dataLink[i].sku,
           name: dataLink[i].name,
-          status: dataLink[i].status,
+          status: status,
           nowPrice: dataLink[i].nowPrice,
           lastPrice: dataLink[i].lastPrice,
           seller,
@@ -220,6 +220,7 @@ export default {
             $set: {
               nowPrice: asUpdate.nowPrice,
               lastPrice: asUpdate.lastPrice,
+              status: asUpdate.status,
             },
           }
         ).then((obj) => {

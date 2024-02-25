@@ -48,6 +48,8 @@ export default {
         const $ = cheerio.load(response.text);
         const jsonRaw = $("script[type='application/ld+json']")[0].children[0].data;
         const seller = $('div.ui-pdp-seller__link-trigger.non-selectable').text();
+        const buyActive = $('[formaction="https://www.mercadolivre.com.br/gz/checkout/buy"]').length
+        console.log(buyActive)
         let time;
         
         await (async () => {
@@ -64,6 +66,9 @@ export default {
 
         const result = JSON.parse(jsonRaw);
         
+        if(buyActive == 0) result.offers.availability = 'OutOfStock'
+
+        console.log(result)
         return {
           ...result, 
           seller : seller ?? '',
@@ -71,8 +76,7 @@ export default {
           storeName : 'mercadoLivre'
         };
       } catch (error) {
-
-        console.log("🚀 84: ~ getDataWithRetry ~ error:", error);
+        console.log("🚀 84: ~ getDataWithRetry ~ error:", url ,'\n', error);
         tentativaAtual++;
         await new Promise((resolve) => setTimeout(resolve, 1000));
         return await Link.find({ link: url });
