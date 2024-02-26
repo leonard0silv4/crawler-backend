@@ -65,9 +65,9 @@ export default {
         
         const result = JSON.parse(jsonRaw);
         
-        // console.log('buyActive',  buyActive)
-        // console.log('search', result)
-        // if(buyActive == 0) result.offers.availability = 'OutOfStock'
+        //  console.log('buyActive',  buyActive)
+        //  console.log('search', result)
+        //  if(buyActive == 0) result.offers.availability = 'OutOfStock'
 
         return {
           ...result, 
