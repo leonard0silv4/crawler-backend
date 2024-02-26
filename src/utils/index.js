@@ -3,7 +3,6 @@ import * as cheerio from 'cheerio';
 import puppeteer from 'puppeteer';
  
 
-
 import Link from '../models/Link.js';
 
 export default {
@@ -34,14 +33,6 @@ export default {
 
 
   async getDataWithRetry(url, maxRetries = 5) {
-
-    let browserPromise = puppeteer.launch(
-      {
-      args: [
-          '--no-sandbox'
-      ]
-    }
-    );
 
     let tentativaAtual = 1;
     
