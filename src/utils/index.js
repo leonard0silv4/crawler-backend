@@ -1,7 +1,5 @@
 import superagent from 'superagent'
 import * as cheerio from 'cheerio';
-// import puppeteer from 'puppeteer';
- 
 
 import Link from '../models/Link.js';
 
@@ -50,18 +48,19 @@ export default {
         const seller = $('div.ui-pdp-seller__link-trigger.non-selectable').text();
         const buyActive = $('[formaction="https://www.mercadolivre.com.br/gz/checkout/buy"]').length
         let time;
-        
-        // await (async () => {
-        //   const browser = await puppeteer.launch();
-        //   const page = await browser.newPage();
-        //   await page.goto(url);
-          
-        //   time = await page.evaluate(() => {
-        //     return window.__PRELOADED_STATE__.initialState?.track?.gtm_event?.startTime;
-        //   });
-          
-        //   await browser.close();
-        // })();
+
+        $('script').each((index, element) => {
+          const scriptContent = $(element).html();
+          const regex = /"startTime":"([^"]+)"/;
+          const match = scriptContent.match(regex);
+    
+          if (match && match[1]) {
+            const startTimeValue = match[1];
+            time = startTimeValue;
+            
+            return false; 
+          }
+        });
         
         const result = JSON.parse(jsonRaw);
         
