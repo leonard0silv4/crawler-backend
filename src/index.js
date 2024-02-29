@@ -1,11 +1,13 @@
 import express from "express";
-import 'dotenv/config'
+import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import { engine } from 'express-handlebars';
 import routes from './routes.js';
 
 const app = express();
+dotenv.config({ path: '../.env' });
+
 
 app.engine('handlebars', engine());
 app.set('view engine', 'handlebars');
