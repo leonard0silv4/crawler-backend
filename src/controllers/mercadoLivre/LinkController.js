@@ -2,7 +2,7 @@ import Link from "../../models/Link.js";
 import verifyToken from "../../middleware/authMiddleware.js";
 import UtilsController from "../../utils/index.js";
 
-export default {
+const LinkController = {
   async store(req, res) {
     try {
       const { link, myPrice } = req.body;
@@ -64,73 +64,85 @@ export default {
     }
   },
 
-  async storeList(req, res) {
-    const { myPrice } = req.body;
-
-    const links = await UtilsController.extractLinks(req.body.link);
-    if (!links) res.end();
-
+  async processLink(link, myPrice, uid) {
     try {
-      for (let i = 0; i < links.length; i++) {
-        const result = await UtilsController.getDataWithRetry(links[i]);
-
+        const result = await UtilsController.getDataWithRetry(link);
+        if (result) console.log('achei 1')
         const {
-          sku,
-          name,
-          image,
-          seller,
-          dateMl,
-          offers: { availability: status = "OutOfStock", price = 0 } = {},
-        } = result || {};
-
-        const dataLink = await Link.findOne({ link: links[i] });
-
-        if (!dataLink && name && image) {
-          console.log(i, "Link não encontrado, criando novo...");
-          await Link.create({
             sku,
-            link: links[i],
             name,
-            status,
+            image,
             seller,
             dateMl,
-            myPrice: Number(myPrice),
-            nowPrice: Number(price),
-            lastPrice: Number(price),
-            image,
-            uid: verifyToken.recoverUid(req, res),
-          });
+            offers: { availability: status = "OutOfStock", price = 0 } = {},
+        } = result || {};
+
+        const dataLink = await Link.findOne({ link: link, uid: uid });
+
+        if (!dataLink && name && image) {
+            console.log("Link não encontrado, criando novo...");
+            await Link.create({
+                sku,
+                link: link,
+                name,
+                status,
+                seller,
+                dateMl,
+                myPrice: Number(myPrice),
+                nowPrice: Number(price),
+                lastPrice: Number(price),
+                image,
+                uid: uid,
+            });
         } else {
-          const priceUpdate = {
-            nowPrice: dataLink.nowPrice,
-            lastPrice: dataLink.lastPrice,
-          };
+            const priceUpdate = {
+                nowPrice: dataLink.nowPrice,
+                lastPrice: dataLink.lastPrice,
+            };
 
-          if (dataLink.nowPrice != price && price !== 0) {
-            priceUpdate.lastPrice = dataLink.nowPrice;
-            priceUpdate.nowPrice = price;
-          }
-
-          await Link.findOneAndUpdate(
-            { _id: dataLink._id, uid: verifyToken.recoverUid(req, res) },
-            {
-              $set: {
-                status: status,
-                nowPrice: priceUpdate.nowPrice,
-                lastPrice: priceUpdate.lastPrice,
-                myPrice: myPrice,
-              },
+            if (dataLink.nowPrice != price && price !== 0) {
+                priceUpdate.lastPrice = dataLink.nowPrice;
+                priceUpdate.nowPrice = price;
             }
-          ).then((obj) => {
-            console.log("Link já existe...", i, dataLink.name, "atualizado...");
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Erro durante a inserção da lista de links", error);
-      return res.end();
-    }
 
+            await Link.findOneAndUpdate(
+                { _id: dataLink._id, uid: uid },
+                {
+                    $set: {
+                        status: status,
+                        nowPrice: priceUpdate.nowPrice,
+                        lastPrice: priceUpdate.lastPrice,
+                        myPrice: myPrice,
+                    },
+                }
+            ).then((obj) => {
+                console.log("Link já existe...", dataLink.name, "atualizado...");
+            });
+        }
+    } catch (error) {
+        console.error("Erro durante a inserção do link", error);
+    }
+},
+
+  async storeList(req, res) {
+    const { myPrice } = req.body;
+    const uid = verifyToken.recoverUid(req, res);
+    
+    const links = await UtilsController.extractLinks(req.body.link);
+    if (!links) {
+        res.end();
+        return;
+    }
+    
+    try {
+        for (let i = 0; i < links.length; i++) {
+            await LinkController.processLink(links[i], myPrice, uid);
+        }
+    } catch (error) {
+        console.error("Erro durante o processamento da lista de links", error);
+        return res.end();
+    }
+    
     res.end();
   },
 
@@ -151,7 +163,7 @@ export default {
           },
         },
       ]);
-
+      
       return res.status(200).json({
         metadata: {
           totalCount: links[0].metadata[0].totalCount,
@@ -242,6 +254,13 @@ export default {
     res.end();
   },
 
+
+  async destroyAll(req, res) {
+     await Link.deleteMany({ uid: verifyToken.recoverUid(req, res) });
+    res.end();
+  },
+  
+
   async clearRate(req, res) {
     Link.updateMany({ uid: verifyToken.recoverUid(req, res) }, [
       { $set: { lastPrice: "$nowPrice" } },
@@ -257,3 +276,6 @@ export default {
     res.end();
   },
 };
+
+
+export default LinkController;

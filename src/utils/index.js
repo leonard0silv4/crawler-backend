@@ -78,7 +78,7 @@ export default {
         console.log("🚀 84: ~ getDataWithRetry ~ error:", url ,'\n', error);
         tentativaAtual++;
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        return await Link.find({ link: url });
+        return await Link.find({ link: url }) || {};
       }
     }
 
