@@ -1,7 +1,7 @@
 import superagent from 'superagent'
 import * as cheerio from 'cheerio';
 
-import Link from '../models/Link.js';
+import Link from '../../../models/Link.js';
 
 export default {
   async extractLinks(url) {
@@ -20,7 +20,7 @@ export default {
         const parts = $(value).attr("href").split('#');
         linksArray.push(parts[0])
       })
-      console.log("🚀 ~ extractLinks ~ links found qtd:", linksArray?.length);
+      console.log("🚀 ~ extractLinks ~ linksArray qtd:", linksArray?.length);
       return linksArray;
     } catch (err) {
       console.log(err);
@@ -42,24 +42,21 @@ export default {
           deadline: 10000,
         });
         
-        
         const $ = cheerio.load(response.text);
         
-        let jsonRaw, time, aggregateRating;
-        
+        let jsonRaw, time;
+
         $('script[type="application/ld+json"]').each((index, element) => {
           const scriptContent = $(element).html();
-          
-          // Verificar se o script contém '@type":"Product"'
           if (scriptContent.includes('@type":"Product"')) {
               jsonRaw = scriptContent;
           }
-      });
-
+        });
+        
 
         const seller = $('div.ui-pdp-seller__link-trigger.non-selectable').text();
-        const buyActive = $('[formaction="https://www.mercadolivre.com.br/gz/checkout/buy"]').length
         
+
         $('script').each((index, element) => {
           const scriptContent = $(element).html();
           const regex = /"startTime":"([^"]+)"/;
@@ -72,20 +69,18 @@ export default {
             return false; 
           }
         });
+
+        
         
         const result = JSON.parse(jsonRaw);
 
-        if(result?.offers?.seller?.aggregateRating?.ratingValue){
-          aggregateRating = result?.offers?.seller?.aggregateRating?.ratingValue;
-        }
+        
         
         return {
           ...result, 
-          seller : seller || result.offers.seller.name,
-          sku : result.sku || result.productID,
+          seller : seller ?? '',
           dateMl : time ?? '',
-          storeName : url.includes('shopee') ? 'shopee' : 'mercadolivre',
-          ratingSeller : aggregateRating,
+          storeName : url.includes('shopee')? 'shopee' : 'mercadolivre'
         };
       } catch (error) {
         console.log("🚀 84: ~ getDataWithRetry ~ error:", url ,'\n', error);

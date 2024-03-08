@@ -15,6 +15,7 @@ const LinkSchema = new mongoose.Schema(
     dateMl: Date,
     uid: String,
     storeName: String,
+    ratingSeller: String,
   },
   {
     toJSON: {

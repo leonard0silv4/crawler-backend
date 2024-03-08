@@ -13,13 +13,18 @@ const LinkController = {
         image,
         seller,
         dateMl,
+        storeName,
+        ratingSeller
       } = await UtilsController.getDataWithRetry(link);
       const dataLink = await Link.findOne({
         sku: sku,
         uid: verifyToken.recoverUid(req, res),
+        storeName : storeName,
       });
+      
 
       if (dataLink == undefined) {
+
         const dataAdded = await Link.create({
           sku,
           link,
@@ -31,6 +36,8 @@ const LinkController = {
           nowPrice: Number(price),
           lastPrice: Number(price),
           image,
+          storeName,
+          ratingSeller,
           uid: verifyToken.recoverUid(req, res),
         });
         return res.json(dataAdded);
@@ -67,13 +74,13 @@ const LinkController = {
   async processLink(link, myPrice, uid) {
     try {
         const result = await UtilsController.getDataWithRetry(link);
-        if (result) console.log('achei 1')
         const {
             sku,
             name,
             image,
             seller,
             dateMl,
+            storeName,
             offers: { availability: status = "OutOfStock", price = 0 } = {},
         } = result || {};
 
@@ -93,6 +100,7 @@ const LinkController = {
                 lastPrice: Number(price),
                 image,
                 uid: uid,
+                storeName
             });
         } else {
             const priceUpdate = {
@@ -147,11 +155,10 @@ const LinkController = {
   },
 
   async index(req, res) {
-    const { page, perPage } = req.query;
-
+    const { page, perPage, storeName } = req.query;
     try {
       const links = await Link.aggregate([
-        { $match: { uid: verifyToken.recoverUid(req, res) } },
+        { $match: { uid: verifyToken.recoverUid(req, res), storeName : storeName } },
         {
           $facet: {
             metadata: [{ $count: "totalCount" }],
@@ -163,16 +170,18 @@ const LinkController = {
           },
         },
       ]);
+
       
       return res.status(200).json({
         metadata: {
-          totalCount: links[0].metadata[0].totalCount,
+          totalCount: links?.[0]?.metadata[0]?.totalCount,
           page: Number(page),
           pageSize: Number(perPage),
         },
         data: links[0].data,
       });
     } catch (error) {
+      console.log(error)
       return res.status(500).end();
     }
   },
@@ -193,8 +202,12 @@ const LinkController = {
   },
 
   async update(req, res) {
+
+    const { storeName } = req.params;
+    
     const dataLink = await Link.find({
       uid: verifyToken.recoverUid(req, res),
+      storeName: storeName
     }).sort({ created_at: -1 });
 
     res.setHeader("Content-Type", "text/event-stream");
@@ -208,6 +221,7 @@ const LinkController = {
         const {
           seller,
           dateMl,
+          ratingSeller,
           offers: { availability: status, price } = {},
         } = result || {};
         const asUpdate = {
@@ -220,7 +234,7 @@ const LinkController = {
           dateMl,
         };
 
-        if (price && Number(dataLink[i].nowPrice) != Number(price)) {
+        if ((price && Number(dataLink[i].nowPrice) != Number(price))) {
           asUpdate.lastPrice = dataLink[i].nowPrice;
           asUpdate.nowPrice = price;
           res.write(`data: ${JSON.stringify(asUpdate)}\n\n`);
@@ -233,6 +247,7 @@ const LinkController = {
               nowPrice: asUpdate.nowPrice,
               lastPrice: asUpdate.lastPrice,
               status: asUpdate.status,
+              ratingSeller : ratingSeller
             },
           }
         ).then((obj) => {
@@ -256,13 +271,17 @@ const LinkController = {
 
 
   async destroyAll(req, res) {
-     await Link.deleteMany({ uid: verifyToken.recoverUid(req, res) });
+
+    const { storeName } = req.params;
+    await Link.deleteMany({ uid: verifyToken.recoverUid(req, res), storeName: storeName });
     res.end();
   },
   
 
   async clearRate(req, res) {
-    Link.updateMany({ uid: verifyToken.recoverUid(req, res) }, [
+    
+    const { storeName } = req.params;
+    Link.updateMany({ uid: verifyToken.recoverUid(req, res), storeName: storeName }, [
       { $set: { lastPrice: "$nowPrice" } },
     ])
       .then((result) => {
