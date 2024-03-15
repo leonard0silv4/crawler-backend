@@ -45,7 +45,7 @@ export default {
         
         const $ = cheerio.load(response.text);
         
-        let jsonRaw, time, aggregateRating;
+        let jsonRaw, time, aggregateRating, result, sku;
         
         $('script[type="application/ld+json"]').each((index, element) => {
           const scriptContent = $(element).html();
@@ -63,18 +63,43 @@ export default {
         $('script').each((index, element) => {
           const scriptContent = $(element).html();
           const regex = /"startTime":"([^"]+)"/;
-          const match = scriptContent.match(regex);
-    
-          if (match && match[1]) {
-            const startTimeValue = match[1];
+          const sTime = scriptContent.match(regex);
+          
+          if (sTime && sTime[1]) {
+            const startTimeValue = sTime[1];
             time = startTimeValue;
-            
+            return false; 
+          }
+        });
+
+        $('script').each((index, element) => {
+          const scriptContent = $(element).html();
+          const regex = /"sku":"([^"]+)"/;
+          const sSku = scriptContent.match(regex);
+          
+          if (sSku && sSku[1]) {
+            const skuParsed = sSku[1];
+            sku = skuParsed;
             return false; 
           }
         });
         
-        const result = JSON.parse(jsonRaw);
-
+        
+        if(jsonRaw){
+           result = JSON.parse(jsonRaw);
+        }else{ 
+          result = {
+            offers :{
+              price : $('[itemprop="price"]').attr('content'),
+              availability : buyActive ? 'http://schema.org/InStock' : 'http://schema.org/OutOfStock'
+            },
+            sku,
+            name : $('.ui-pdp-title').text(),
+            image : $('.ui-pdp-gallery__figure img').attr('src').replace('.jpg', '.webp'),
+            
+          };
+        }
+        
         if(result?.offers?.seller?.aggregateRating?.ratingValue){
           aggregateRating = result?.offers?.seller?.aggregateRating?.ratingValue;
         }
@@ -88,7 +113,7 @@ export default {
           ratingSeller : aggregateRating,
         };
       } catch (error) {
-        console.log("🚀 84: ~ getDataWithRetry ~ error:", url ,'\n', error);
+        console.log("🚀 97: ~ getDataWithRetry ~ error:", url ,'\n', error);
         tentativaAtual++;
         await new Promise((resolve) => setTimeout(resolve, 1000));
         return await Link.find({ link: url }) || {};

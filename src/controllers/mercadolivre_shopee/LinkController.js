@@ -234,9 +234,10 @@ const LinkController = {
           dateMl,
         };
 
+
         if ((price && Number(dataLink[i].nowPrice) != Number(price))) {
           asUpdate.lastPrice = dataLink[i].nowPrice;
-          asUpdate.nowPrice = price;
+          asUpdate.nowPrice = Number(price);
           res.write(`data: ${JSON.stringify(asUpdate)}\n\n`);
         }
 
