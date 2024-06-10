@@ -57,8 +57,8 @@ export default {
       });
 
 
-        const seller = $('div.ui-pdp-seller__link-trigger.non-selectable').text();
-        const buyActive = $('[formaction="https://www.mercadolivre.com.br/gz/checkout/buy"]').length
+      const seller = $('.ui-pdp-seller__link-trigger-button span:nth-child(2)').text();
+      const buyActive = $('[formaction="https://www.mercadolivre.com.br/gz/checkout/buy"]').length
         
         $('script').each((index, element) => {
           const scriptContent = $(element).html();
