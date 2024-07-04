@@ -68,7 +68,7 @@ export default {
           if (sTime && sTime[1]) {
             const startTimeValue = sTime[1];
             time = startTimeValue;
-            return false; 
+            return false;
           }
         });
 
