@@ -186,20 +186,80 @@ const LinkController = {
     }
   },
 
+  // async updateOne(req, res) {
+  //   const { id, myPrice } = req.body;
+
+  //   await Link.findOneAndUpdate(
+  //     { _id: id, uid: verifyToken.recoverUid(req, res) },
+  //     {
+  //       $set: {
+  //         myPrice: myPrice,
+  //       },
+  //     }
+  //   );
+
+  //   return res.status(200).end();
+  // },
+
+// Atualizar/Adicionar um registro preço || tag
   async updateOne(req, res) {
-    const { id, myPrice } = req.body;
-
-    await Link.findOneAndUpdate(
-      { _id: id, uid: verifyToken.recoverUid(req, res) },
-      {
-        $set: {
-          myPrice: myPrice,
-        },
-      }
-    );
-
-    return res.status(200).end();
+    const { id, myPrice, tags } = req.body;
+  
+    const updateFields = {};
+  
+    if (myPrice !== undefined) {
+      updateFields.myPrice = myPrice;
+    }
+  
+    if (tags !== undefined) {
+      updateFields.tags = tags;
+    }
+  
+    
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ error: 'Nenhum campo fornecido para atualização' });
+    }
+  
+    try {
+      await Link.findOneAndUpdate(
+        { _id: id, uid: verifyToken.recoverUid(req, res) },
+        { $set: updateFields }, 
+        { new: true }
+      );
+  
+      return res.status(200).json({ message: 'Produto atualizado com sucesso' });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Erro ao atualizar o produto' });
+    }
   },
+
+
+  // Remove tag from Link
+  async destroyTag(req, res) {
+    const { id, tag } = req.params;
+        await Link.updateOne(
+        { _id: id, uid: verifyToken.recoverUid(req, res) },
+      { $pull: { tags: tag } }  // Remove a tag exata do array de tags
+    );
+    res.end();
+  },
+
+
+  async getUniqueTags(req, res) {
+    try {
+      const uid = verifyToken.recoverUid(req, res);
+
+      const uniqueTags = await Link.distinct('tags', {uid});
+      
+      // Envia a lista de tags como resposta
+      return res.status(200).json(uniqueTags);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Erro ao buscar tags únicas' });
+    }
+  },
+  
 
   async update(req, res) {
 
@@ -270,7 +330,7 @@ const LinkController = {
     res.end();
   },
 
-
+// Limpeza da tabela toda
   async destroyAll(req, res) {
 
     const { storeName } = req.params;
@@ -278,7 +338,7 @@ const LinkController = {
     res.end();
   },
   
-
+// Limpeza de variações
   async clearRate(req, res) {
     
     const { storeName } = req.params;

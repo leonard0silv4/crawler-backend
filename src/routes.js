@@ -23,11 +23,13 @@ routes.get("/send",verifyJWT.isTokenized, MailController.index);
 
 // Rotas de links
 routes.get("/links",verifyJWT.isTokenized, LinkController.index);
+routes.get("/tags",verifyJWT.isTokenized, LinkController.getUniqueTags);
 routes.get("/links/update/:storeName", verifyJWT.isTokenized, LinkController.update);
 routes.put("/links", verifyJWT.isTokenized, LinkController.updateOne);
 routes.post("/links", verifyJWT.isTokenized, LinkController.store);
 routes.post("/list/batch", LinkController.storeList);
 routes.post("/links/clearRates/:storeName",verifyJWT.isTokenized, LinkController.clearRate);
+routes.delete("/links/tags/:id/:tag",verifyJWT.isTokenized,  LinkController.destroyTag);
 routes.delete("/links/:sku",verifyJWT.isTokenized,  LinkController.destroy);
 routes.delete("/links/clearAll/:storeName",verifyJWT.isTokenized,  LinkController.destroyAll);
 
