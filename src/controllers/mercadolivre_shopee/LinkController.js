@@ -5,7 +5,7 @@ import UtilsController from "../../utils/index.js";
 const LinkController = {
   async store(req, res) {
     try {
-      const { link, myPrice } = req.body;
+      const { link, myPrice, tag } = req.body;
       const {
         sku,
         name,
@@ -32,6 +32,7 @@ const LinkController = {
           status,
           seller,
           dateMl,
+          tags: [tag],
           myPrice: Number(myPrice),
           nowPrice: Number(price),
           lastPrice: Number(price),
@@ -71,7 +72,7 @@ const LinkController = {
     }
   },
 
-  async processLink(link, myPrice, uid) {
+  async processLink(link, myPrice, tag, uid) {
     try {
         const result = await UtilsController.getDataWithRetry(link);
         const {
@@ -93,6 +94,7 @@ const LinkController = {
                 link: link,
                 name,
                 status,
+                tags: [tag],
                 seller,
                 dateMl,
                 myPrice: Number(myPrice),
@@ -133,7 +135,7 @@ const LinkController = {
 },
 
   async storeList(req, res) {
-    const { myPrice } = req.body;
+    const { myPrice, tag } = req.body;
     const uid = verifyToken.recoverUid(req, res);
     
     const links = await UtilsController.extractLinks(req.body.link);
@@ -144,7 +146,7 @@ const LinkController = {
     
     try {
         for (let i = 0; i < links.length; i++) {
-            await LinkController.processLink(links[i], myPrice, uid);
+            await LinkController.processLink(links[i], myPrice,tag, uid);
         }
     } catch (error) {
         console.error("Erro durante o processamento da lista de links", error);
