@@ -1,6 +1,7 @@
 import {Resend} from "resend";
 import fetch, { Headers } from 'node-fetch';
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY, { fetch });
+
 
 export default  {
    
