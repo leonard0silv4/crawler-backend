@@ -4,10 +4,12 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import { engine } from 'express-handlebars';
 import routes from './routes.js';
+import cron from 'node-cron';
 
 const app = express();
 dotenv.config({ path: '../.env' });
 
+import CronController from "./controllers/CronController.js";
 
 app.engine('handlebars', engine());
 app.set('view engine', 'handlebars');
@@ -21,6 +23,12 @@ mongoose.connect(
     useUnifiedTopology: true,
   }
 );
+
+
+
+cron.schedule('0 4 * * *', () => {
+  CronController.cronUsers()
+});
 
 
 app.use(cors());

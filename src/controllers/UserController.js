@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import moment from "moment";
+import verifyToken from "../middleware/authMiddleware.js";
 
 export default {
   async login(req, res) {
@@ -29,6 +30,47 @@ export default {
     }
   },
 
+  async getUsersWithSendEmail() {
+    try {
+      const users = await User.find({ sendEmail: true });
+      return users;
+    } catch (error) {
+      console.error("Erro ao buscar usuários:", error);
+      return [];
+    }
+  },
+
+  async getUserConfig(req, res) {
+    const userId = verifyToken.recoverUid(req, res);
+    try {
+      const users = await User.findById(userId).select(
+        "sendEmail storeName emailNotify _id"
+      );
+
+      return res.status(200).json(users);
+    } catch (error) {
+      console.error("Erro ao buscar usuários:", error);
+      return res.status(500).json({ error: "Erro ao buscar usuários:" });
+    }
+  },
+
+  async saveConfig(req, res) {
+    const userId = verifyToken.recoverUid(req, res);
+    try {
+      const { emailNotify, storeName, sendEmail } = req.body;
+
+      await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          $set: { storeName, emailNotify, sendEmail },
+        }
+      ).then((obj) => {
+        return res.json(obj);
+      });
+    } catch (error) {
+      return res.status(500).json({ error: "Erro ao atualizar usuários:" });
+    }
+  },
 
   async register(req, res) {
     try {

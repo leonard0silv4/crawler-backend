@@ -4,6 +4,31 @@ import * as cheerio from 'cheerio';
 import Link from '../models/Link.js';
 
 export default {
+
+
+
+  async updateMyPriceFromCatalog(catalogUrl){
+    console.log('search on list sellers')
+    const response = await superagent.get(`${catalogUrl}/s`).timeout({
+      response: 5000,
+      deadline: 10000,
+    });
+
+    const $ = cheerio.load(response.text);
+    const form = $(`span:contains("${process.env.STORE_NAME}")`).closest('form')
+    
+    if(!form.length)
+      return
+    
+    const fraction = form.find('.andes-money-amount__fraction').first().text().trim();
+    const cents = form.find('.andes-money-amount__cents').first().text().trim();
+
+    const price = parseFloat(`${fraction}.${cents}`);
+
+    console.log(`Valor encontrado: ${price}`);
+    return price;
+  },
+
   async extractLinks(url) {
     try {
       const response = await superagent.get(url).timeout({
@@ -45,20 +70,28 @@ export default {
         
         const $ = cheerio.load(response.text);
         
-        let jsonRaw, time, aggregateRating, result, sku;
+        let jsonRaw, time, aggregateRating, result, sku, autoPrice;
         
-        $('script[type="application/ld+json"]').each((index, element) => {
+      $('script[type="application/ld+json"]').each((index, element) => {
           const scriptContent = $(element).html();
           
           // Verificar se o script contém '@type":"Product"'
           if (scriptContent.includes('@type":"Product"')) {
               jsonRaw = scriptContent;
+
           }
       });
 
-
-      const seller = $('.ui-pdp-seller__link-trigger-button span:nth-child(2)').text();
+      
+      const seller = $('.ui-pdp-container__row .ui-pdp-seller__link-trigger-button span:nth-child(2)').first().text();
       const buyActive = $('[formaction="https://www.mercadolivre.com.br/gz/checkout/buy"]').length
+      const full = $('[href="#full_icon"]').length ? true : false
+      const catalog = $('.ui-pdp-other-sellers-item__buybox').length ? true : false
+
+      // if(catalog && seller != process.env.STORE_NAME){
+      //   autoPrice = await this.updateMyPriceFromCatalog(url)
+      // }
+      
         
         $('script').each((index, element) => {
           const scriptContent = $(element).html();
@@ -111,6 +144,9 @@ export default {
           dateMl : time ?? '',
           storeName : url.includes('shopee') ? 'shopee' : 'mercadolivre',
           ratingSeller : aggregateRating,
+          full,
+          catalog,
+          ...(autoPrice ? { autoPrice } : {}) // Adiciona autoPrice apenas se existir
         };
       } catch (error) {
         console.log("🚀 97: ~ getDataWithRetry ~ error:", url ,'\n', error);

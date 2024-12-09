@@ -1,6 +1,10 @@
+import jwt from "jsonwebtoken";
+
+
 import Link from "../../models/Link.js";
 import verifyToken from "../../middleware/authMiddleware.js";
 import UtilsController from "../../utils/index.js";
+import MailController from "../../controllers/MailController.js";
 
 const LinkController = {
   async store(req, res) {
@@ -14,7 +18,9 @@ const LinkController = {
         seller,
         dateMl,
         storeName,
-        ratingSeller
+        ratingSeller,
+        catalog,
+        full
       } = await UtilsController.getDataWithRetry(link);
       const dataLink = await Link.findOne({
         sku: sku,
@@ -40,6 +46,8 @@ const LinkController = {
           storeName,
           ratingSeller,
           uid: verifyToken.recoverUid(req, res),
+          catalog,
+          full
         });
         return res.json(dataAdded);
       }
@@ -82,6 +90,8 @@ const LinkController = {
             seller,
             dateMl,
             storeName,
+            catalog,
+            full,
             offers: { availability: status = "OutOfStock", price = 0 } = {},
         } = result || {};
 
@@ -102,7 +112,9 @@ const LinkController = {
                 lastPrice: Number(price),
                 image,
                 uid: uid,
-                storeName
+                storeName,
+                catalog,
+                full
             });
         } else {
             const priceUpdate = {
@@ -262,6 +274,66 @@ const LinkController = {
     }
   },
   
+  async updateCron(id, emailTo = undefined ){
+    const updatedProducts = [];
+
+    try {
+      const token = jwt.sign({ userId: id }, process.env.SECRET, {
+        expiresIn: "365d",
+      });
+  
+      const uid = jwt.verify(token, process.env.SECRET).userId;
+  
+      const dataLink = await Link.find({ uid }).sort({ created_at: -1 });
+  
+      for (let i = 0; i < dataLink.length; i++) {
+        try {
+          const result = await UtilsController.getDataWithRetry(dataLink[i].link);
+  
+          const {
+            offers: { price } = {},
+            full,
+            autoPrice = null
+          } = result || {};
+  
+          if (price && Number(dataLink[i].nowPrice) !== Number(price)) {
+            const oldPrice = Number(dataLink[i].nowPrice);
+            const newPrice = Number(price);
+            const myPrice = Number(dataLink[i].myPrice);
+  
+            const status = newPrice > myPrice ? "Ganhando" : "Perdendo";
+  
+            // Atualize o banco de dados
+            await Link.findOneAndUpdate(
+              { _id: dataLink[i]._id, uid },
+              {
+                $set: { nowPrice: newPrice, lastPrice: oldPrice, ...(autoPrice != null && { myPrice: autoPrice }) },
+              }
+            );
+  
+            updatedProducts.push({
+              name: dataLink[i].name,
+              link: dataLink[i].link,
+              newPrice,
+              oldPrice,
+              myPrice,
+              status,
+              full
+            });
+          }
+        } catch (error) {
+          console.error(`Erro durante a busca para ${dataLink[i].link}`, error);
+        }
+      }
+  
+      console.log("Atualização concluída.");
+  
+      // Envie o email com os produtos atualizados
+      if(emailTo) await MailController.sendEmailWithUpdates(updatedProducts, emailTo);
+    } catch (error) {
+      console.error("Erro durante o processo de atualização:", error);
+    }
+  },
 
   async update(req, res) {
 
@@ -284,6 +356,9 @@ const LinkController = {
           seller,
           dateMl,
           ratingSeller,
+          catalog,
+          full,
+          autoPrice = null,
           offers: { availability: status, price } = {},
         } = result || {};
         const asUpdate = {
@@ -292,12 +367,15 @@ const LinkController = {
           status: status ?? dataLink[i].status,
           nowPrice: dataLink[i].nowPrice,
           lastPrice: dataLink[i].lastPrice,
+          ...(autoPrice != null && { myPrice: autoPrice }), 
           seller,
           dateMl,
+          catalog,
+          full,
         };
 
 
-        if ((price && Number(dataLink[i].nowPrice) != Number(price))) {
+        if ((price && Number(dataLink[i].nowPrice) != Number(price)) || autoPrice ) {
           asUpdate.lastPrice = dataLink[i].nowPrice;
           asUpdate.nowPrice = Number(price);
           res.write(`data: ${JSON.stringify(asUpdate)}\n\n`);
@@ -310,7 +388,11 @@ const LinkController = {
               nowPrice: asUpdate.nowPrice,
               lastPrice: asUpdate.lastPrice,
               status: asUpdate.status,
-              ratingSeller : ratingSeller
+              catalog,
+              full : asUpdate.full,
+              seller: seller,
+              ratingSeller : ratingSeller,
+              ...(autoPrice != null && { myPrice: autoPrice })
             },
           }
         ).then((obj) => {
@@ -358,6 +440,7 @@ const LinkController = {
     res.end();
   },
 };
+
 
 
 export default LinkController;

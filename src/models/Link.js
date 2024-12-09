@@ -16,6 +16,8 @@ const LinkSchema = new mongoose.Schema(
     uid: String,
     storeName: String,
     ratingSeller: String,
+    full: Boolean,
+    catalog: Boolean,
     tags: [String],
   },
   {
