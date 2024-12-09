@@ -1,26 +1,39 @@
-import {Resend} from "resend";
-import fetch, { Headers, Response, Request } from "node-fetch";
-
-
+import nodemailer from 'nodemailer'
 
 export default  {
+
+  async testIntegration(req, res){
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.resend.com',
+      port: 465,
+      secure: true, // usar SSL
+      auth: {
+        user: 'resend',
+        pass: `${process.env.RESEND_API_KEY}`,
+      }
+    });
+
+    const mailOptions = {
+      from: 'onboarding@resend.dev',
+      to: 'leo07vasp@gmail.com',
+      subject: 'Enviando Email usando Node.js',
+      text: 'Isso foi fácil!'
+    };
+
+    transporter.sendMail(mailOptions, function(error, info){
+      if (error) {
+        console.log('Erro:', error);
+        res.status(500).json({ error: error});
+      } else {
+        console.log('Email enviado:', info.response);
+        res.status(200).json({ info });
+        res
+      }
+    });
+  },
    
   async sendEmailWithUpdates(updatedProducts, emailTo) {
 
-    const resend = new Resend(process.env.RESEND_API_KEY, { fetch });
-
-
-    if (!global.fetch) {
-      global.fetch = fetch ;
-      global.Headers = Headers ;
-      global.Response = Response ;
-      global.Request = Request ;
-      }
-
-    const headers = new Headers({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-    });
 
     if (!updatedProducts.length) {
       console.log("Nenhum produto atualizado, email não será enviado.");
@@ -68,14 +81,44 @@ export default  {
     `;
   
     try {
-      await resend.emails.send({
-        from: 'Status Produtos crawler <onboarding@resend.dev>',
-        to: [emailTo],
-        subject: "Produtos Atualizados",
-        html: emailContent,
+
+
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.resend.com',
+        port: 465,
+        secure: true, // usar SSL
+        auth: {
+          user: 'resend',
+          pass: `${process.env.RESEND_API_KEY}`,
+        }
       });
   
-      console.log("Email enviado com sucesso.");
+      const mailOptions = {
+        from: 'Status Produtos crawler <onboarding@resend.dev>',
+        to: emailTo,
+        subject: "Produtos Atualizados",
+        html: emailContent
+      };
+  
+      transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log('Erro:', error);
+          res.status(500).json({ error: error});
+        } else {
+          console.log('Email enviado:', info.response);
+          res.status(200).json({ info });
+          res
+        }
+      });
+
+      // await resend.emails.send({
+      //   from: 'Status Produtos crawler <onboarding@resend.dev>',
+      //   to: [emailTo],
+      //   subject: "Produtos Atualizados",
+      //   html: emailContent,
+      // });
+  
+      // console.log("Email enviado com sucesso.");
     } catch (error) {
       console.error("Erro ao enviar email:", error);
     }

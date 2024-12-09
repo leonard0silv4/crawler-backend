@@ -2,6 +2,7 @@ import express from 'express';
 
 import LinkController from './controllers/mercadolivre_shopee/LinkController.js'
 import UserController from './controllers/UserController.js';
+import MailController from './controllers/MailController.js';
 
 import verifyJWT from './middleware/authMiddleware.js'
 
@@ -11,13 +12,14 @@ routes.get("/",  (req, res) => {
     res.json({status : new Date()});
 });
 
-routes.get("/health",  async (req, res) => {
+routes.get("/healthz",  async (req, res) => {
     res.json({
         date : new Date(),
         status : 'ok v2'
     })    
 });
 
+routes.get("/send", MailController.testIntegration);
 
 
 // Rotas de links

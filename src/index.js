@@ -26,7 +26,7 @@ mongoose.connect(
 
 
 
-cron.schedule('* * * * *', () => {
+cron.schedule('0 * * * *', () => {
   CronController.cronUsers()
 });
 
