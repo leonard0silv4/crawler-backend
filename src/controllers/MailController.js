@@ -1,12 +1,21 @@
 import {Resend} from "resend";
-import fetch, { Headers } from 'node-fetch';
-const resend = new Resend(process.env.RESEND_API_KEY, { fetch });
+import fetch, { Headers, Response, Request } from "node-fetch";
+
 
 
 export default  {
    
   async sendEmailWithUpdates(updatedProducts, emailTo) {
 
+    const resend = new Resend(process.env.RESEND_API_KEY, { fetch });
+
+
+    if (!global.fetch) {
+      global.fetch = fetch ;
+      global.Headers = Headers ;
+      global.Response = Response ;
+      global.Request = Request ;
+      }
 
     const headers = new Headers({
       'Content-Type': 'application/json',
