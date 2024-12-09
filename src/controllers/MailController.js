@@ -1,9 +1,17 @@
 import {Resend} from "resend";
+import fetch, { Headers } from 'node-fetch';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default  {
    
   async sendEmailWithUpdates(updatedProducts, emailTo) {
+
+
+    const headers = new Headers({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+    });
+
     if (!updatedProducts.length) {
       console.log("Nenhum produto atualizado, email não será enviado.");
       return;

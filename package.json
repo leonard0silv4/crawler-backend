@@ -22,6 +22,7 @@
     "moment": "^2.30.1",
     "mongoose": "^8.1.0",
     "node-cron": "^3.0.3",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^6.9.9",
     "nodemailer-express-handlebars": "^6.1.0",
     "resend": "^4.0.1",
