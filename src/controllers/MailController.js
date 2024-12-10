@@ -94,7 +94,7 @@ export default  {
       });
   
       const mailOptions = {
-        from: 'Status Produtos crawler <onboarding@resend.dev>',
+        from: `Status Produtos crawler (${process.env.CONF ?? 'prod'}) <onboarding@resend.dev>`,
         to: emailTo,
         subject: "Produtos Atualizados",
         html: emailContent
