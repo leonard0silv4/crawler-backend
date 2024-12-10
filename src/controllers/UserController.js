@@ -44,7 +44,7 @@ export default {
     const userId = verifyToken.recoverUid(req, res);
     try {
       const users = await User.findById(userId).select(
-        "sendEmail storeName emailNotify _id"
+        "sendEmail storeName emailNotify _id cronInterval"
       );
 
       return res.status(200).json(users);
@@ -57,12 +57,11 @@ export default {
   async saveConfig(req, res) {
     const userId = verifyToken.recoverUid(req, res);
     try {
-      const { emailNotify, storeName, sendEmail } = req.body;
-
+      const { emailNotify, storeName, sendEmail, hour } = req.body;
       await User.findOneAndUpdate(
         { _id: userId },
         {
-          $set: { storeName, emailNotify, sendEmail },
+          $set: { storeName, emailNotify, sendEmail, cronInterval :  `0 ${hour} * * *` },
         }
       ).then((obj) => {
         return res.json(obj);

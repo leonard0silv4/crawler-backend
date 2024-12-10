@@ -7,7 +7,8 @@ const userSchema = new mongoose.Schema({
  storeName: { type: String },
  emailNotify: { type: String },
  expiries_at: { type: Date },
- 
+ cronInterval: { type: String }, // Novo campo para armazenar o intervalo do cron
+
  
  });
 export default mongoose.model('User', userSchema);
