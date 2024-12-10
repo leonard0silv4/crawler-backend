@@ -87,6 +87,7 @@ export default {
       const buyActive = $('[formaction="https://www.mercadolivre.com.br/gz/checkout/buy"]').length
       const full = $('[href="#full_icon"]').length ? true : false
       const catalog = $('.ui-pdp-other-sellers-item__buybox').length ? true : false
+      const paused = $('.ui-pdp-message.ui-vpp-message .andes-message__content').length ? true : false
 
       // if(catalog && seller != process.env.STORE_NAME){
       //   autoPrice = await this.updateMyPriceFromCatalog(url)
@@ -120,11 +121,13 @@ export default {
         
         if(jsonRaw){
            result = JSON.parse(jsonRaw);
+           if(paused) result.offers.availability = 'https://schema.org/OutOfStock'
+           
         }else{ 
           result = {
             offers :{
               price : $('[itemprop="price"]').attr('content'),
-              availability : buyActive ? 'http://schema.org/InStock' : 'http://schema.org/OutOfStock'
+              availability : buyActive ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
             },
             sku,
             name : $('.ui-pdp-title').text(),
@@ -136,10 +139,11 @@ export default {
         if(result?.offers?.seller?.aggregateRating?.ratingValue){
           aggregateRating = result?.offers?.seller?.aggregateRating?.ratingValue;
         }
+
         
         return {
           ...result, 
-          seller : seller || result.offers.seller.name,
+          seller : seller || result?.offers?.seller?.name,
           sku : result.sku || result.productID,
           dateMl : time ?? '',
           storeName : url.includes('shopee') ? 'shopee' : 'mercadolivre',

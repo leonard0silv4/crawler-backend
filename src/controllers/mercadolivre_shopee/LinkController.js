@@ -92,7 +92,7 @@ const LinkController = {
             storeName,
             catalog,
             full,
-            offers: { availability: status = "OutOfStock", price = 0 } = {},
+            offers: { availability: status = "https://schema.org/OutOfStock", price = 0 } = {},
         } = result || {};
 
         const dataLink = await Link.findOne({ link: link, uid: uid });
@@ -375,7 +375,7 @@ const LinkController = {
         };
 
 
-        if ((price && Number(dataLink[i].nowPrice) != Number(price)) || autoPrice ) {
+        if ((price && Number(dataLink[i].nowPrice) != Number(price)) || autoPrice || status != dataLink[i].status || dataLink[i].seller != seller  ) {
           asUpdate.lastPrice = dataLink[i].nowPrice;
           asUpdate.nowPrice = Number(price);
           res.write(`data: ${JSON.stringify(asUpdate)}\n\n`);
