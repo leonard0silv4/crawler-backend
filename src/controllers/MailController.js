@@ -1,35 +1,36 @@
 import nodemailer from 'nodemailer'
+import { MailerSend, EmailParams, Sender, Recipient } from "mailersend";
+
 
 export default  {
 
   async testIntegration(req, res){
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.resend.com',
-      port: 465,
-      secure: true, // usar SSL
-      auth: {
-        user: 'resend',
-        pass: `${process.env.RESEND_API_KEY}`,
-      }
-    });
-
-    const mailOptions = {
-      from: 'onboarding@resend.dev',
-      to: 'leo07vasp@gmail.com',
-      subject: 'Enviando Email usando Node.js',
-      text: 'Isso foi fácil!'
-    };
-
-    transporter.sendMail(mailOptions, function(error, info){
-      if (error) {
-        console.log('Erro:', error);
-        res.status(500).json({ error: error});
-      } else {
-        console.log('Email enviado:', info.response);
-        res.status(200).json({ info });
-        res
-      }
-    });
+      const {email} = req.query;
+    try{
+      const mailerSend = new MailerSend({
+        apiKey: process.env.MAIL_SENDER,
+      });
+      
+      const sentFrom = new Sender("MS_JYchjA@trial-pxkjn41e75plz781.mlsender.net", "Your name");
+      
+      const recipients = [
+        new Recipient(`${email || 'leo07vasp@gmail.com'}`, "Leonardo Rodrigues da Silva")
+      ];
+      
+      const emailParams = new EmailParams()
+        .setFrom(sentFrom)
+        .setTo(recipients)
+        .setReplyTo(sentFrom)
+        .setSubject("This is a Subject")
+        .setHtml("<strong>Email funcionando</strong>");
+      
+      await mailerSend.email.send(emailParams);
+  
+      console.log('Email enviado:');
+      res.status(200).json({ msg: `email enviado : ${email || 'leo07vasp@gmail.com'}` });
+    }catch(err){
+      res.status(500).json({ error: err});
+    }
   },
    
   async sendEmailWithUpdates(updatedProducts, emailTo) {
@@ -79,48 +80,34 @@ export default  {
         </body>
       </html>
     `;
-  
-    try {
-
-
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.resend.com',
-        port: 465,
-        secure: true, // usar SSL
-        auth: {
-          user: 'resend',
-          pass: `${process.env.RESEND_API_KEY}`,
-        }
+     
+    
+    try{
+      const mailerSend = new MailerSend({
+        apiKey: process.env.MAIL_SENDER,
       });
+      
+      const sentFrom = new Sender("MS_JYchjA@trial-pxkjn41e75plz781.mlsender.net", "Report Mercado Livre");
+      
+      const recipients = [
+        new Recipient(emailTo)
+      ];
+      
+      const emailParams = new EmailParams()
+        .setFrom(sentFrom)
+        .setTo(recipients)
+        .setReplyTo(sentFrom)
+        .setSubject("Produtos Atualizados")
+        .setHtml(emailContent)
+        
+      
+      await mailerSend.email.send(emailParams);
   
-      const mailOptions = {
-        from: `Status Produtos crawler (${process.env.CONF ?? 'prod'}) <onboarding@resend.dev>`,
-        to: emailTo,
-        subject: "Produtos Atualizados",
-        html: emailContent
-      };
-  
-      transporter.sendMail(mailOptions, function(error, info){
-        if (error) {
-          console.log('Erro:', error);
-          res.status(500).json({ error: error});
-        } else {
-          console.log('Email enviado:', info.response);
-          res.status(200).json({ info });
-          res
-        }
-      });
-
-      // await resend.emails.send({
-      //   from: 'Status Produtos crawler <onboarding@resend.dev>',
-      //   to: [emailTo],
-      //   subject: "Produtos Atualizados",
-      //   html: emailContent,
-      // });
-  
-      // console.log("Email enviado com sucesso.");
-    } catch (error) {
-      console.error("Erro ao enviar email:", error);
+      console.log('Email enviado:');
+      res.status(200).json({ msg: 'email enviado' });
+    }catch(err){
+      res.status(500).json({ error: err});
     }
+
   },
 }
