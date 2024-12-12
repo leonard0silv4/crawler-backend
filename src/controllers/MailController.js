@@ -103,10 +103,11 @@ export default  {
       
       await mailerSend.email.send(emailParams);
   
-      console.log('Email enviado:');
-      res.status(200).json({ msg: 'email enviado' });
+      console.log(`Email enviado:${emailTo}`);
     }catch(err){
-      res.status(500).json({ error: err});
+
+      console.log("🚀 ~ sendEmailWithUpdates ~ err:", err);
+      
     }
 
   },
