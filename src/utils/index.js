@@ -55,7 +55,7 @@ export default {
   },
 
 
-  async getDataWithRetry(url, maxRetries = 5) {
+  async getDataWithRetry(url, maxRetries = 3) {
 
     let tentativaAtual = 1;
     
