@@ -10,8 +10,8 @@ export default {
   async updateMyPriceFromCatalog(catalogUrl){
     console.log('search on list sellers')
     const response = await superagent.get(`${catalogUrl}/s`).timeout({
-      response: 5000,
-      deadline: 10000,
+      response: 3000, 
+      deadline: 5000, 
     });
 
     const $ = cheerio.load(response.text);
