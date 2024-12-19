@@ -2,7 +2,6 @@ import "dotenv/config";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
-import moment from "moment";
 import verifyToken from "../middleware/authMiddleware.js";
 
 export default {
@@ -13,18 +12,15 @@ export default {
       if (!user)
         return res.status(401).json({ error: "Usuário não encontrado" });
 
-      // if (moment(user.expiries_at).format() < moment().format())
-      //   return res.status(440).json({ error: "Assinatura expirada" });
-
       const passwordMatch = await bcrypt.compare(password, user.password);
       if (!passwordMatch)
         return res.status(401).json({ error: "Falha na autenticação" });
 
-      const token = jwt.sign({ userId: user._id }, process.env.SECRET, {
-        expiresIn: "12h",
+      const token = jwt.sign({ userId: user._id, roleUser: user.role }, process.env.SECRET, {
+        expiresIn: "365d",
       });
 
-      res.status(200).json({ token });
+      res.status(200).json({ token, role : user.role });
     } catch (error) {
       res.status(500).json({ error: "stacktrace login" });
     }

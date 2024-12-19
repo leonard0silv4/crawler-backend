@@ -17,6 +17,17 @@ const verifyJWT = {
     });
 },
 
+async recoverRole(req, res) {
+  const token = req.headers['authorization']?.split(" ")?.[1];
+  return jwt.verify(token, process.env.SECRET, function (err, decoded) {
+    let { roleUser } = decoded;
+    if (typeof roleUser === "string" && (roleUser.startsWith('"') || roleUser.startsWith("'"))) {
+      roleUser = JSON.parse(roleUser);
+    }
+    return roleUser;
+  });
+},
+
 recoverUid(req, res){
   const token = req.headers['authorization']?.split(" ")?.[1];
   return jwt.verify(token, process.env.SECRET, function(err, decoded){

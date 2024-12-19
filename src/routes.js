@@ -3,6 +3,8 @@ import express from 'express';
 import LinkController from './controllers/mercadolivre_shopee/LinkController.js'
 import UserController from './controllers/UserController.js';
 import MailController from './controllers/MailController.js';
+import FactionistController from './controllers/FactionistController.js';
+import JobController from './controllers/JobController.js';
 
 import verifyJWT from './middleware/authMiddleware.js'
 
@@ -12,10 +14,10 @@ routes.get("/",  (req, res) => {
     res.json({status : new Date()});
 });
 
-routes.get("/healthz",  async (req, res) => {
+routes.get("/health",  async (req, res) => {
     res.json({
         date : new Date(),
-        status : 'ok v2'
+        status : 'ok : v1.2'
     })    
 });
 
@@ -40,6 +42,16 @@ routes.post("/register", UserController.register);
 routes.get("/config", verifyJWT.isTokenized, UserController.getUserConfig);
 routes.post("/saveConfig", verifyJWT.isTokenized, UserController.saveConfig);
 
+// Rotas faccionista
+routes.post("/factionist", verifyJWT.isTokenized, FactionistController.store);
+routes.put("/factionist/:faccionistId", verifyJWT.isTokenized, FactionistController.update);
+routes.get("/factionist/:faccionistId?", verifyJWT.isTokenized, FactionistController.index);
+routes.delete("/factionist/:id",verifyJWT.isTokenized,  FactionistController.destroy);
 
+// Rotas jobs
+routes.post("/job", verifyJWT.isTokenized, JobController.storeJob);
+routes.get("/job/:faccionistaId?", verifyJWT.isTokenized, JobController.indexJobs);
+routes.put("/job/:id", verifyJWT.isTokenized, JobController.updateJob);
+routes.put("/jobs/", verifyJWT.isTokenized, JobController.updateJobs);
 
 export default routes;
