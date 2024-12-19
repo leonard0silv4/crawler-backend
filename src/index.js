@@ -22,7 +22,7 @@ const io = new Server(server, {
     origin: "*", // Ou substitua por sua URL do frontend em produção
     methods: ["GET", "POST"],
   },
-  path: '/socket.io', // Defina o caminho correto
+  path: '/api',
 });
 
 // Conexão com o MongoDB
