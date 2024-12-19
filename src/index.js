@@ -37,7 +37,7 @@ mongoose
   .catch((err) => console.error("Erro ao conectar ao MongoDB:", err));
 
 // Cron job
-cron.schedule("*/1 * * * *", () => {
+cron.schedule("*/30 * * * *", () => {
   console.log("Executando Cron Job...");
   CronController.cronUsers();
 });
