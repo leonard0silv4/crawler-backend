@@ -19,10 +19,9 @@ const server = http.createServer(app);
 // Configuração do Socket.IO com CORS
 const io = new Server(server, {
   cors: {
-    origin: "*", // Ou substitua por sua URL do frontend em produção
+    origin: "*", // Altere para a URL do seu frontend em produção
     methods: ["GET", "POST"],
   },
-  path: '/api',
 });
 
 // Conexão com o MongoDB
