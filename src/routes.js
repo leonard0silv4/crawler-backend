@@ -54,4 +54,33 @@ routes.get("/job/:faccionistaId?", verifyJWT.isTokenized, JobController.indexJob
 routes.put("/job/:id", verifyJWT.isTokenized, JobController.updateJob);
 routes.put("/jobs/", verifyJWT.isTokenized, JobController.updateJobs);
 
+
+
+
+
+routes.get("/events", (req, res) => {
+    // Configura os cabeçalhos para SSE
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+  
+    // Envia uma mensagem inicial
+    res.write(`data: Conexão estabelecida\n\n`);
+  
+    // Mantém a conexão aberta
+    const intervalId = setInterval(() => {
+      res.write(`data: Ping\n\n`); // Evita que a conexão feche automaticamente
+    }, 30000); // 30 segundos
+  
+    // Armazene a resposta em uma lista global para enviar eventos posteriormente
+    global.sseClients = global.sseClients || [];
+    global.sseClients.push(res);
+  
+    // Remove a conexão quando o cliente desconecta
+    req.on("close", () => {
+      clearInterval(intervalId);
+      global.sseClients = global.sseClients.filter((client) => client !== res);
+    });
+  });
+
 export default routes;

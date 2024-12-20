@@ -4,8 +4,17 @@ import verifyToken from "../middleware/authMiddleware.js";
 const localDate = new Date();
 
 
-export default {
-    async storeJob(req, res) {
+const JobController = {
+
+  emitSSE(event, data) {
+    if (global.sseClients && global.sseClients.length > 0) {
+      global.sseClients.forEach((client) => {
+        client.write(`event: ${event}\n`);
+        client.write(`data: ${JSON.stringify(data)}\n\n`);
+      });
+    }
+  },
+  async storeJob(req, res) {
 
       const ownerId = await verifyToken.recoverUid(req, res);
 
@@ -92,10 +101,13 @@ export default {
           // Atualiza o campo
           job[field] = !job[field];
     
-          const io = req.app.get("socketio");
-          io.emit("jobUpdated", {
-            job,
-          });
+          // const io = req.app.get("socketio");
+          // io.emit("jobUpdated", {
+          //   job,
+          // });
+
+          JobController.emitSSE("jobUpdated", { job });
+
     
           await job.save();
     
@@ -106,6 +118,7 @@ export default {
         }
       },
 
+      
       async updateJobs(req, res) {
         const { ids, field } = req.body; // Recebe os IDs como um array no corpo da requisição
         
@@ -147,10 +160,11 @@ export default {
 
             
             await job.save(); // Salva as alterações
-            const io = req.app.get("socketio");
-            io.emit("jobUpdated", {
-              job,
-            });
+            // const io = req.app.get("socketio");
+            // io.emit("jobUpdated", {
+            //   job,
+            // });
+            JobController.emitSSE("jobUpdated", { job });
           }
       
           // Envia atualização via socket.io
@@ -167,3 +181,6 @@ export default {
       }
       
 }
+
+
+export default JobController;
