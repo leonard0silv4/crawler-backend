@@ -10,7 +10,9 @@ const jobSchema = new mongoose.Schema({
     totMetros: { type: Number, required: true }, // Total de metros
     orcamento: { type: Number, required: true },
     recebidoConferido: { type: Boolean, default: false },
+    dataRecebidoConferido: { type: Date },
     lotePronto: { type: Boolean, default: false },
+    dataLotePronto: { type: Date },
     recebido: { type: Boolean, default: false },
     aprovado: { type: Boolean, default: false },
     pago: { type: Boolean, default: false },

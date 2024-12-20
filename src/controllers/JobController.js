@@ -1,7 +1,6 @@
 import Job from "../models/Job.js";
 import verifyToken from "../middleware/authMiddleware.js";
 
-const localDate = new Date();
 
 
 const JobController = {
@@ -15,6 +14,7 @@ const JobController = {
     }
   },
   async storeJob(req, res) {
+    const localDate = new Date();
 
       const ownerId = await verifyToken.recoverUid(req, res);
 
@@ -39,7 +39,7 @@ const JobController = {
         try {
           const job = new Job({
             lote,
-            data : new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000).toISOString(),
+            data : new Date(localDate.getTime()).toISOString(),
             qtd,
             larg,
             compr,
@@ -81,6 +81,8 @@ const JobController = {
       async updateJob(req, res) {
         const { id } = req.params;
         const { field, ids } = req.body;
+        const localDate = new Date();
+
     
         if (!["recebidoConferido", "lotePronto", "pago" , "lotePronto" , "aprovado" , "recebido", "emenda"].includes(field)) {
           return res
@@ -95,7 +97,15 @@ const JobController = {
           }
           
           if(field == 'pago' ){
-            job['dataPgto'] = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000).toISOString();
+            job['dataPgto'] = new Date(localDate.getTime()).toISOString();
+          }
+
+          if(field == 'recebidoConferido' ){
+            job['dataRecebidoConferido'] = new Date(localDate.getTime()).toISOString();
+          }
+
+          if(field == 'lotePronto' ){
+            job['dataLotePronto'] = new Date(localDate.getTime()).toISOString();
           }
 
           // Atualiza o campo
@@ -120,6 +130,9 @@ const JobController = {
 
       
       async updateJobs(req, res) {
+
+        const localDate = new Date();
+
         const { ids, field } = req.body; // Recebe os IDs como um array no corpo da requisição
         
         // Validação do campo
@@ -137,7 +150,7 @@ const JobController = {
           // Atualiza o campo para cada job encontrado
           for (const job of jobs) {
             if (field === "pago") {
-              job["dataPgto"] = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000).toISOString();
+              job["dataPgto"] = new Date(localDate.getTime()).toISOString();
             }
       
             job[field] = !job[field]; // Inverte o valor do campo
