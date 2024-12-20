@@ -30,9 +30,9 @@ const JobController = {
           lotePronto,
           recebido,
           aprovado,
+          emAnalise,
           pago,
           dataPgto,
-          caixa,
           faccionistaId,
         } = req.body;
     
@@ -49,10 +49,10 @@ const JobController = {
             recebidoConferido,
             lotePronto,
             recebido,
+            emAnalise,
             aprovado,
             pago,
             dataPgto,
-            caixa,
             faccionistaId,
             ownerId,
           });
@@ -111,11 +111,6 @@ const JobController = {
           // Atualiza o campo
           job[field] = !job[field];
     
-          // const io = req.app.get("socketio");
-          // io.emit("jobUpdated", {
-          //   job,
-          // });
-
           JobController.emitSSE("jobUpdated", { job });
 
     
@@ -136,7 +131,7 @@ const JobController = {
         const { ids, field } = req.body; // Recebe os IDs como um array no corpo da requisição
         
         // Validação do campo
-        if (!["recebidoConferido", "lotePronto", "pago", "aprovado", "recebido", "emenda"].includes(field)) {
+        if (!["recebidoConferido", "lotePronto", "pago", "aprovado", "recebido", "emenda", "emAnalise"].includes(field)) {
           return res.status(400).json({ error: "Campo inválido para atualização." });
         }
       
@@ -154,7 +149,17 @@ const JobController = {
             }
       
             job[field] = !job[field]; // Inverte o valor do campo
-      
+            
+            if (field == "recebido") {
+              if(job["aprovado"] == false){
+                job['emAnalise'] = true
+              }
+            }
+
+            if (field == "aprovado" ) {
+                job['emAnalise'] = false
+            }
+
             if (field === "emenda") {
               const fator = 0.65; // Fator baseado no cálculo do cliente
               const custoPorMetro = 234 / 390; // Ajuste o custo por metro, se necessário
@@ -173,18 +178,11 @@ const JobController = {
 
             
             await job.save(); // Salva as alterações
-            // const io = req.app.get("socketio");
-            // io.emit("jobUpdated", {
-            //   job,
-            // });
+            
             JobController.emitSSE("jobUpdated", { job });
           }
       
-          // Envia atualização via socket.io
-          // const io = req.app.get("socketio");
-          // io.emit("jobsUpdated", {
-          //   job,
-          // });
+          
       
           return res.json({ message: "Jobs atualizados com sucesso.", jobs });
         } catch (error) {

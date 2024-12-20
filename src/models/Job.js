@@ -15,6 +15,7 @@ const jobSchema = new mongoose.Schema({
     dataLotePronto: { type: Date },
     recebido: { type: Boolean, default: false },
     aprovado: { type: Boolean, default: false },
+    emAnalise: { type: Boolean, default: false },
     pago: { type: Boolean, default: false },
     dataPgto: { type: Date },
     caixa: { type: String },
