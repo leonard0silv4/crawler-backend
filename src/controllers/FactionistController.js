@@ -20,7 +20,8 @@ export default {
       const faccionistsStatus = await Promise.all(
         faccionists.map(async (faccionista) => {
           // jobs relacionados ao faccionista
-          const jobs = await Job.find({ faccionistaId: faccionista._id });
+          
+          const jobs = await Job.find({ faccionistaId: faccionista._id,  });
 
           return {
             ...faccionista.toObject(), 

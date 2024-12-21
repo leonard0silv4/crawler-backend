@@ -31,6 +31,7 @@ const JobController = {
           recebido,
           aprovado,
           emAnalise,
+          isArchived,
           pago,
           dataPgto,
           faccionistaId,
@@ -50,6 +51,7 @@ const JobController = {
             lotePronto,
             recebido,
             emAnalise,
+            isArchived,
             aprovado,
             pago,
             dataPgto,
@@ -84,7 +86,7 @@ const JobController = {
         const localDate = new Date();
 
     
-        if (!["recebidoConferido", "lotePronto", "pago" , "lotePronto" , "aprovado" , "recebido", "emenda"].includes(field)) {
+        if (!["recebidoConferido", "lotePronto", "pago" , "lotePronto" , "aprovado" , "recebido", "emenda", "isArchived"].includes(field)) {
           return res
             .status(400)
             .json({ error: "Campo inválido para atualização." });
@@ -106,6 +108,23 @@ const JobController = {
 
           if(field == 'lotePronto' ){
             job['dataLotePronto'] = new Date(localDate.getTime()).toISOString();
+          }
+
+          if (field === "emenda") {
+            const fator = 0.65; // Fator baseado no cálculo do cliente
+            const custoPorMetro = 234 / 390; // Ajuste o custo por metro, se necessário
+    
+            // Pegando os valores necessários do job
+            const { qtd, larg, compr } = job;
+    
+            if (!qtd || !larg || !compr) {
+              return res.status(400).json({ error: "Valores insuficientes para calcular o orçamento." });
+            }
+            // Aplicando a fórmula
+            const metrosBase = qtd * larg * compr * fator;
+            const totMetros = job.emenda == true ? metrosBase * 1.3 : metrosBase;
+            job.orcamento = totMetros * custoPorMetro;
+            job.totMetros = totMetros.toFixed(2);
           }
 
           // Atualiza o campo
@@ -131,7 +150,7 @@ const JobController = {
         const { ids, field } = req.body; // Recebe os IDs como um array no corpo da requisição
         
         // Validação do campo
-        if (!["recebidoConferido", "lotePronto", "pago", "aprovado", "recebido", "emenda", "emAnalise"].includes(field)) {
+        if (!["recebidoConferido", "lotePronto", "pago", "aprovado", "recebido", "emenda", "emAnalise", "isArchived"].includes(field)) {
           return res.status(400).json({ error: "Campo inválido para atualização." });
         }
       
@@ -174,6 +193,7 @@ const JobController = {
               const metrosBase = qtd * larg * compr * fator;
               const totMetros = job.emenda == true ? metrosBase * 1.3 : metrosBase;
               job.orcamento = totMetros * custoPorMetro;
+              job.totMetros = totMetros.toFixed(2)
             }
 
             

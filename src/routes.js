@@ -5,6 +5,7 @@ import UserController from './controllers/UserController.js';
 import MailController from './controllers/MailController.js';
 import FactionistController from './controllers/FactionistController.js';
 import JobController from './controllers/JobController.js';
+import PdfController from './controllers/PdfController.js';
 
 import verifyJWT from './middleware/authMiddleware.js'
 
@@ -54,8 +55,8 @@ routes.get("/job/:faccionistaId?", verifyJWT.isTokenized, JobController.indexJob
 routes.put("/job/:id", verifyJWT.isTokenized, JobController.updateJob);
 routes.put("/jobs/", verifyJWT.isTokenized, JobController.updateJobs);
 
-
-
+// Rota pdf
+routes.post("/report/pdf", verifyJWT.isTokenized, PdfController.index);
 
 
 routes.get("/events", (req, res) => {
