@@ -68,18 +68,29 @@ export default {
           .text(`Chave pix do pagamento: `, { continued: true });
         doc.font("Helvetica-Bold").text(pixKey ?? "");
 
+        doc
+        .font("Helvetica")
+        .fontSize(12)
+        .text("-".repeat(100), { align: "left" });
         doc.moveDown();
       });
 
       // Cálculo do valor total
       const total = jobs.reduce((sum, job) => sum + job.orcamento, 0); // Ajuste conforme necessário
 
+
+      // Linha de separação
+      doc
+        .font("Helvetica")
+        .fontSize(12)
+        .text("_".repeat(60), { align: "left" });
+
       // Adicionando a tabela com o total
       doc.moveDown();
       doc
         .fontSize(14)
         .font("Helvetica-Bold")
-        .text("Resumo do Relatório", { align: "center" });
+        .text("Resumo do Relatório", { align: "left" });
       doc.moveDown();
 
       // Cabeçalhos da tabela
@@ -92,7 +103,7 @@ export default {
       doc
         .font("Helvetica")
         .fontSize(12)
-        .text("-".repeat(120), { align: "left" });
+        .text("-".repeat(100), { align: "left" });
 
       // Adicionando o total
       doc
