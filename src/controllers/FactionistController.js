@@ -65,6 +65,17 @@ export default {
       return res.json(faccionista);
     } catch (error) {
       console.error("Erro ao criar faccionista:", error.message);
+
+      if (error.code === 11000) {
+        const duplicatedField = Object.keys(error.keyValue)[0];
+        const duplicatedValue = error.keyValue[duplicatedField];
+        return res.status(409).json({
+          error: `Já existe um registro com o campo '${duplicatedField}' igual a '${duplicatedValue}'.`,
+        });
+      }
+
+      
+
       res
         .status(500)
         .json({ error: "stacktrace create faccionista on console" });
