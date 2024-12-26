@@ -1,7 +1,7 @@
 import Job from "../models/Job.js";
 import verifyToken from "../middleware/authMiddleware.js";
 
-
+const custoPorMetro = 0.6;
 
 const JobController = {
 
@@ -114,8 +114,7 @@ const JobController = {
           job[field] = !job[field];
 
           if (field === "emenda") {
-            const custoPorMetro = 0.6; // Custo por metro
-
+            
             // Pegando os valores necessários do job
             const { qtd, larg, compr } = job;
           
@@ -152,6 +151,66 @@ const JobController = {
           console.error("Erro ao atualizar job:", error);
           return res.status(500).json({ error: "Erro ao atualizar job." });
         }
+      },
+
+      async updateSizes(req, res){
+
+        const { id, field, value } = req.body; 
+
+        // Validação do campo
+        if (!["qtd", "larg", "compr"].includes(field)) {
+          return res.status(400).json({ error: "Campo inválido para atualização." });
+        }
+
+
+        try {
+          const job = await Job.findById(id);
+          if (!job) {
+            return res.status(404).json({ error: "Job não encontrado." });
+          }
+          
+          // Atualiza o campo
+          job[field] = value;
+
+          
+            // Pegando os valores necessários do job
+            const { qtd, larg, compr } = job;
+          
+            if (!qtd || !larg || !compr) {
+              return res.status(400).json({ error: "Valores insuficientes para calcular o orçamento." });
+            }
+          
+            // Calcula total de metros com base na quantidade
+            let totMetros = (larg * 2 + compr * 2) * qtd;
+          
+            // Ajusta orçamento com base na emenda
+            let orcamento = totMetros * custoPorMetro;
+          
+            if (job.emenda) {
+              // Adiciona custo da emenda e ajusta totMetros
+              totMetros = (larg * 2 + compr * 3) * qtd;
+              orcamento = totMetros * custoPorMetro;
+            }
+          
+            // Atualiza os valores no job
+            job.totMetros = parseFloat(totMetros.toFixed(2));
+            job.orcamento = parseFloat(orcamento.toFixed(2));
+          
+
+          
+    
+          JobController.emitSSE("jobUpdated", { job });
+
+    
+          await job.save();
+    
+          return res.json({ message: "Job atualizado com sucesso.", job });
+        } catch (error) {
+          console.error("Erro ao atualizar job:", error);
+          return res.status(500).json({ error: "Erro ao atualizar job." });
+        }
+
+        res.end();
       },
 
       
@@ -192,8 +251,7 @@ const JobController = {
             }
 
             if (field === "emenda") {
-              const custoPorMetro = 0.6; // Custo por metro
-
+              
               // Pegando os valores necessários do job
               const { qtd, larg, compr } = job;
             

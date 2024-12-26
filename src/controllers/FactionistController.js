@@ -4,6 +4,20 @@ import Job from "../models/Job.js";
 import verifyToken from "../middleware/authMiddleware.js";
 
 export default {
+
+  async indexUser(req, res) {
+    try {
+      const faccionistId = verifyToken.recoverUid(req, res);
+            
+      const faccionists = await User.find({ _id : faccionistId }).select("-password"); 
+            
+      return res.json(faccionists);
+    } catch (error) {
+      console.error("Erro ao buscar faccionista:", error);
+      throw new Error("Erro ao buscar faccionista");
+    }
+  },
+
   async index(req, res) {
     try {
       const ownerId = verifyToken.recoverUid(req, res);
@@ -130,7 +144,27 @@ export default {
       console.error("Erro ao atualizar faccionista:", error);
       return res.status(500).json({ error: "Erro ao atualizar faccionista" });
     }
+  },
+
+
+  async findLastLoteByFaccionistaId(req, res) {
+
+    const { faccionistId } = req.params;
+    try {
+      const lastLote = await Job
+        .findOne({ faccionistaId: faccionistId })
+        .sort({ data: -1 }) 
+        .select('lote'); 
+      
+      res.json(lastLote ? lastLote.lote : null);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({error:"Erro ao encontrar o último lote" })
+
+    }
   }
+
+  
 
 
 };

@@ -47,6 +47,8 @@ routes.post("/saveConfig", verifyJWT.isTokenized, UserController.saveConfig);
 routes.post("/factionist", verifyJWT.isTokenized, FactionistController.store);
 routes.put("/factionist/:faccionistId", verifyJWT.isTokenized, FactionistController.update);
 routes.get("/factionist/:faccionistId?", verifyJWT.isTokenized, FactionistController.index);
+routes.get("/factionistUser/", verifyJWT.isTokenized, FactionistController.indexUser);
+routes.get("/factionistJob/:faccionistId", verifyJWT.isTokenized, FactionistController.findLastLoteByFaccionistaId);
 routes.delete("/factionist/:id",verifyJWT.isTokenized,  FactionistController.destroy);
 
 // Rotas jobs
@@ -54,6 +56,7 @@ routes.post("/job", verifyJWT.isTokenized, JobController.storeJob);
 routes.get("/job/:faccionistaId?", verifyJWT.isTokenized, JobController.indexJobs);
 routes.put("/job/:id", verifyJWT.isTokenized, JobController.updateJob);
 routes.put("/jobs/", verifyJWT.isTokenized, JobController.updateJobs);
+routes.put("/jobs/sizes", verifyJWT.isTokenized, JobController.updateSizes);
 
 // Rota pdf
 routes.post("/report/pdf", verifyJWT.isTokenized, PdfController.index);
