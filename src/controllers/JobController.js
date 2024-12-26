@@ -110,9 +110,12 @@ const JobController = {
             job['dataLotePronto'] = new Date(localDate.getTime()).toISOString();
           }
 
+          // Atualiza o campo
+          job[field] = !job[field];
+
           if (field === "emenda") {
             const custoPorMetro = 0.6; // Custo por metro
-          
+
             // Pegando os valores necessários do job
             const { qtd, larg, compr } = job;
           
@@ -126,9 +129,10 @@ const JobController = {
             // Ajusta orçamento com base na emenda
             let orcamento = totMetros * custoPorMetro;
           
-            if (job.emenda === true) {
-              // Adiciona custo da emenda
-              orcamento += (compr * qtd) * custoPorMetro;
+            if (job.emenda) {
+              // Adiciona custo da emenda e ajusta totMetros
+              totMetros = (larg * 2 + compr * 3) * qtd;
+              orcamento = totMetros * custoPorMetro;
             }
           
             // Atualiza os valores no job
@@ -136,8 +140,7 @@ const JobController = {
             job.orcamento = parseFloat(orcamento.toFixed(2));
           }
 
-          // Atualiza o campo
-          job[field] = !job[field];
+          
     
           JobController.emitSSE("jobUpdated", { job });
 
@@ -189,20 +192,30 @@ const JobController = {
             }
 
             if (field === "emenda") {
-              const fator = 0.65; // Fator baseado no cálculo do cliente
-              const custoPorMetro = 234 / 390; // Ajuste o custo por metro, se necessário
-      
+              const custoPorMetro = 0.6; // Custo por metro
+
               // Pegando os valores necessários do job
               const { qtd, larg, compr } = job;
-      
+            
               if (!qtd || !larg || !compr) {
                 return res.status(400).json({ error: "Valores insuficientes para calcular o orçamento." });
               }
-              // Aplicando a fórmula
-              const metrosBase = qtd * larg * compr * fator;
-              const totMetros = job.emenda == true ? metrosBase * 1.3 : metrosBase;
-              job.orcamento = totMetros * custoPorMetro;
-              job.totMetros = totMetros.toFixed(2)
+            
+              // Calcula total de metros com base na quantidade
+              let totMetros = (larg * 2 + compr * 2) * qtd;
+            
+              // Ajusta orçamento com base na emenda
+              let orcamento = totMetros * custoPorMetro;
+            
+              if (job.emenda) {
+                // Adiciona custo da emenda e ajusta totMetros
+                totMetros = (larg * 2 + compr * 3) * qtd;
+                orcamento = totMetros * custoPorMetro;
+              }
+            
+              // Atualiza os valores no job
+              job.totMetros = parseFloat(totMetros.toFixed(2));
+              job.orcamento = parseFloat(orcamento.toFixed(2));
             }
 
             
