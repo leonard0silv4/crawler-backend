@@ -72,7 +72,7 @@ const JobController = {
         
 
         try {
-          const Jobs = await Job.find({ faccionistaId }).select("-password"); // Exclui o campo de senha da resposta
+          const Jobs = await Job.find({ faccionistaId }).select("-password").sort({ data: -1 }); // Exclui o campo de senha da resposta
           return res.json(Jobs);
         } catch (error) {
           console.error("Erro ao buscar jobs:", error);
