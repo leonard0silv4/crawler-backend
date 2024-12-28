@@ -19,6 +19,7 @@ const jobSchema = new mongoose.Schema({
     pago: { type: Boolean, default: false },
     dataPgto: { type: Date },
     caixa: { type: String },
+    qtdRolo: { type: Number },
     isArchived: { type: Boolean, default: false },
     faccionistaId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Relaciona a costura ao faccionista
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Relaciona a costura ao owner
