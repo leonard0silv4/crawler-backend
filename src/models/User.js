@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
     expiries_at: { type: Date },
     cronInterval: { type: String },
     pixKey: { type: String },
+    advanceMoney: { type: Number },
     address: { type: String },
     phone: { type: String },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: function () {

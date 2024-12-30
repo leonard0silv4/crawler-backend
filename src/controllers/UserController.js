@@ -67,6 +67,9 @@ export default {
     }
   },
 
+
+
+
   async register(req, res) {
     try {
       const { username, password } = req.body;

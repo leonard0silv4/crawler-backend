@@ -58,6 +58,10 @@ routes.put("/job/:id", verifyJWT.isTokenized, JobController.updateJob);
 routes.put("/jobs/", verifyJWT.isTokenized, JobController.updateJobs);
 routes.put("/jobs/sizes", verifyJWT.isTokenized, JobController.updateSizes);
 
+routes.put("/jobs/rate", verifyJWT.isTokenized, JobController.updateRate);
+routes.get("/jobs/rate/:id", verifyJWT.isTokenized, JobController.indexRate);
+routes.put("/jobs/splitAdvancedMoney", verifyJWT.isTokenized, JobController.updateJobHasSplit);
+
 // Rota pdf
 routes.post("/report/pdf", verifyJWT.isTokenized, PdfController.index);
 

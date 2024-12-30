@@ -20,6 +20,8 @@ const jobSchema = new mongoose.Schema({
     dataPgto: { type: Date },
     caixa: { type: String },
     qtdRolo: { type: Number },
+    rateLote: { type: Number },
+    advancedMoneyPayment : { type: Number },
     isArchived: { type: Boolean, default: false },
     faccionistaId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Relaciona a costura ao faccionista
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Relaciona a costura ao owner
@@ -27,11 +29,15 @@ const jobSchema = new mongoose.Schema({
 
 
   jobSchema.pre("find", function () {
-    this.where({ isArchived: { $ne: true } });
+    if (!this.getOptions().bypassMiddleware) {
+      this.where({ isArchived: { $ne: true } });
+    }
   });
   
   jobSchema.pre("findOne", function () {
-    this.where({ isArchived: { $ne: true } });
+    if (!this.getOptions().bypassMiddleware) {
+      this.where({ isArchived: { $ne: true } });
+    }
   });
   
   export default mongoose.model("Job", jobSchema);

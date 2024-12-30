@@ -44,6 +44,16 @@ export default {
         doc.font("Helvetica").fontSize(12).text(`Metros:`, { continued: true });
         doc.font("Helvetica-Bold").text(`${job.totMetros.toFixed(2)}`);
 
+        if(job.advancedMoneyPayment){
+          doc
+            .font("Helvetica")
+            .fontSize(12)
+            .text(`Desconto de adiantamento:`, { continued: true }).fillColor('red');
+          doc.font("Helvetica-Bold").text(`R$${job.advancedMoneyPayment.toFixed(2)}`).fillColor('black');
+        }
+
+      
+
         doc
           .font("Helvetica")
           .fontSize(12)

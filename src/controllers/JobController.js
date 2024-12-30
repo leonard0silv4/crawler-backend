@@ -72,9 +72,10 @@ const JobController = {
         let { faccionistaId } = req.params;
         if (!faccionistaId) faccionistaId = await verifyToken.recoverUid(req, res);
         
-
         try {
-          const Jobs = await Job.find({ faccionistaId }).select("-password").sort({ data: -1 }); // Exclui o campo de senha da resposta
+          
+           const  Jobs = await Job.find({ faccionistaId }).select("-password").sort({ data: -1 }); 
+          
           return res.json(Jobs);
         } catch (error) {
           console.error("Erro ao buscar jobs:", error);
@@ -215,6 +216,40 @@ const JobController = {
         res.end();
       },
 
+      async updateRate(req, res){
+        const { id, value } = req.body; 
+
+        try{
+          const job = await Job.findById(id);
+          
+          job.rateLote = value
+
+          await job.save();
+
+          JobController.emitSSE("jobUpdated", { job });
+
+          return res.json({ message: "Job atualizado com sucesso.", job });
+
+        }catch(error){
+          console.error("Erro updateRate:", error);
+          return res.status(500).json({ error: "Erro updateRate." });
+
+        }
+      },
+
+      async indexRate(req, res){
+        const { id } = req.params; 
+
+        try{
+          const job = await Job.findById(id);
+          return res.json({job});
+
+        }catch(error){
+          console.error("Erro indexRate:", error);
+          return res.status(500).json({ error: "Erro indexRate." });
+
+        }
+      },
       
       async updateJobs(req, res) {
 
@@ -291,6 +326,33 @@ const JobController = {
           console.error("Erro ao atualizar jobs:", error);
           return res.status(500).json({ error: "Erro ao atualizar jobs." });
         }
+      },
+
+      async updateJobHasSplit(req, res){
+        const {ids , value} = req.body
+
+        try {
+          // Busca e atualiza todos os Jobs correspondentes
+          const jobs = await Job.find({ _id: { $in: ids } });
+          if (!jobs || jobs.length === 0) {
+            return res.status(404).json({ error: "Nenhum job encontrado." });
+          }
+      
+          // Atualiza o campo para cada job encontrado
+          for (const job of jobs) {
+            job.advancedMoneyPayment = value;
+            await job.save(); 
+            
+          }
+      
+          
+      
+          return res.json({ message: "Jobs atualizados com sucesso.", jobs });
+        } catch (error) {
+          console.error("Erro ao atualizar jobs:", error);
+          return res.status(500).json({ error: "Erro ao atualizar jobs." });
+        }
+
       }
       
 }

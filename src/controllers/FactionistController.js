@@ -4,14 +4,62 @@ import Job from "../models/Job.js";
 import verifyToken from "../middleware/authMiddleware.js";
 
 export default {
-
   async indexUser(req, res) {
     try {
       const faccionistId = verifyToken.recoverUid(req, res);
-            
-      const faccionists = await User.find({ _id : faccionistId }).select("-password"); 
-            
-      return res.json(faccionists);
+
+      const jobs = await Job.find({ faccionistaId: faccionistId, pago: true })
+        .setOptions({ bypassMiddleware: true })
+        .select("orcamento rateLote lote advancedMoneyPayment isArchived pago")
+        .lean();
+
+      
+      const jobsWithRate = jobs.filter((job) => job.rateLote);
+      const jobsNotArchived = jobs.filter((job) => !job.isArchived && job.pago && job.advancedMoneyPayment );
+
+      const totalAdvancedMoney = jobsNotArchived.reduce(
+        (sum, job) => sum + job.advancedMoneyPayment,
+        0
+      );
+      
+      const totalRateLote = jobsWithRate.reduce(
+        (sum, job) => sum + job.rateLote,
+        0
+      );
+      
+      const evaluationScore = jobsWithRate.length
+      ? (totalRateLote / jobsWithRate.length).toFixed(2)
+      : 0;
+      
+
+      const recentLotes = jobsWithRate
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) 
+        .slice(0, 10) 
+        .map((job) => ({
+          lote: job.lote,
+          rateLote: job.rateLote === 10 ? job.rateLote : `0${job.rateLote}`,
+        }));
+
+      const jobSummary = jobs.reduce(
+        (summary, job) => {
+          summary.totalOrcamentos += job.orcamento || 0;
+          summary.totalJobs += 1;
+          return summary;
+        },
+        { totalOrcamentos: 0, totalJobs: 0 } // Valores iniciais
+      );
+
+      const faccionists = await User.find({ _id: faccionistId }).select(
+        "-password"
+      );
+
+      return res.json({
+        ...faccionists,
+        totalAdvancedMoney,
+        jobSummary,
+        evaluationScore,
+        recentLotes,
+      });
     } catch (error) {
       console.error("Erro ao buscar faccionista:", error);
       throw new Error("Erro ao buscar faccionista");
@@ -22,24 +70,44 @@ export default {
     try {
       const ownerId = verifyToken.recoverUid(req, res);
       let faccionists;
-      const { faccionistId = null } = req.params
-
+      const { faccionistId = null } = req.params;
+      
       // Busca os faccionistas relacionados ao ownerId
-      if(faccionistId){
-        faccionists = await User.find({ ownerId, _id : faccionistId }).select("-password"); 
-      }else{
-        faccionists = await User.find({ ownerId }).select("-password"); 
+      if (faccionistId) {
+        faccionists = await User.find({ ownerId, _id: faccionistId }).select(
+          "-password"
+        );
+      } else {
+        faccionists = await User.find({ ownerId }).select("-password");
       }
 
       const faccionistsStatus = await Promise.all(
         faccionists.map(async (faccionista) => {
           // jobs relacionados ao faccionista
+
+          const jobsRate = await Job.find({ faccionistaId: faccionista._id })
+          .setOptions({ bypassMiddleware: true }).sort({
+            data: -1,})
+          .lean();
+
+              
+          const jobsWithRate = jobsRate.filter((job) => job.rateLote);
+          const jobs = jobsRate.filter((job) => !job.isArchived);
           
-          const jobs = await Job.find({ faccionistaId: faccionista._id,  }).sort({ data: -1 });
+          const totalRateLote = jobsWithRate.reduce(
+            (sum, job) => sum + job.rateLote,
+            0
+          );
+          
+          const evaluationScore = jobsWithRate.length
+          ? (totalRateLote / jobsWithRate.length).toFixed(2)
+          : 0;
+          
 
           return {
-            ...faccionista.toObject(), 
+            ...faccionista.toObject(),
             jobs,
+            evaluationScore
           };
         })
       );
@@ -88,8 +156,6 @@ export default {
         });
       }
 
-      
-
       res
         .status(500)
         .json({ error: "stacktrace create faccionista on console" });
@@ -105,7 +171,7 @@ export default {
     res.end();
   },
 
-  async update(req, res){
+  async update(req, res) {
     try {
       const ownerId = verifyToken.recoverUid(req, res);
       const { faccionistId } = req.params;
@@ -123,12 +189,13 @@ export default {
           return res.status(404).json({ error: "Faccionista não encontrado" });
         }
 
-        const { username, lastName, password, pixKey } = req.body;
+        const { username, lastName, password, pixKey, advanceMoney } = req.body;
 
         // Atualiza os campos que foram passados no corpo da requisição
         if (username) faccionista.username = username;
         if (lastName) faccionista.lastName = lastName;
         if (pixKey) faccionista.pixKey = pixKey;
+        if (advanceMoney) faccionista.advanceMoney = advanceMoney;
 
         // Se uma nova senha for fornecida, a senha deve ser criptografada
         if (password) {
@@ -146,25 +213,17 @@ export default {
     }
   },
 
-
   async findLastLoteByFaccionistaId(req, res) {
-
     const { faccionistId } = req.params;
     try {
-      const lastLote = await Job
-        .findOne({ faccionistaId: faccionistId })
-        .sort({ data: -1 }) 
-        .select('lote'); 
-      
+      const lastLote = await Job.findOne({ faccionistaId: faccionistId })
+        .sort({ data: -1 })
+        .select("lote");
+
       res.json(lastLote ? lastLote.lote : null);
     } catch (err) {
       console.error(err);
-      res.status(500).json({error:"Erro ao encontrar o último lote" })
-
+      res.status(500).json({ error: "Erro ao encontrar o último lote" });
     }
-  }
-
-  
-
-
+  },
 };
