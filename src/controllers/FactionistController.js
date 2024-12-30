@@ -53,12 +53,29 @@ export default {
         "-password"
       );
 
+      const startOfWeek = new Date();
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Domingo
+      startOfWeek.setHours(0, 0, 0, 0);
+  
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(endOfWeek.getDate() + 6); // Sábado
+      endOfWeek.setHours(23, 59, 59, 999);
+  
+      // Verifica se algum trabalho foi alterado na última semana
+      const hasUpdatesLastWeek = faccionists.some(
+        (fac) =>
+          fac.advanceMoneyLastModified &&
+          new Date(fac.advanceMoneyLastModified) >= startOfWeek &&
+          new Date(fac.advanceMoneyLastModified) <= endOfWeek
+      );
+
       return res.json({
         ...faccionists,
         totalAdvancedMoney,
         jobSummary,
         evaluationScore,
         recentLotes,
+        updateLastWeek: hasUpdatesLastWeek,
       });
     } catch (error) {
       console.error("Erro ao buscar faccionista:", error);

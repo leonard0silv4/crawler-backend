@@ -12,10 +12,19 @@ const userSchema = new mongoose.Schema({
     cronInterval: { type: String },
     pixKey: { type: String },
     advanceMoney: { type: Number },
+    advanceMoneyLastModified: { type: Date }, // Data da última modificação
     address: { type: String },
     phone: { type: String },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: function () {
       return this.role === "faccionista";
     } }, // Relaciona faccionistas ao usuário owner
   }, { timestamps: true });
+
+  userSchema.pre('save', function (next) {
+    if (this.isModified('advanceMoney')) {
+        this.advanceMoneyLastModified = new Date(); // Atualiza a data
+    }
+    next();
+});
+
 export default mongoose.model('User', userSchema);
