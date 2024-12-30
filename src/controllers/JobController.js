@@ -87,7 +87,7 @@ const JobController = {
         const { id } = req.params;
         const { field, ids } = req.body;
         const localDate = new Date();
-
+        
     
         if (!["recebidoConferido", "lotePronto", "pago" , "lotePronto" , "aprovado" , "recebido", "emenda", "isArchived"].includes(field)) {
           return res
@@ -112,6 +112,15 @@ const JobController = {
           if(field == 'lotePronto' ){
             job['dataLotePronto'] = new Date(localDate.getTime()).toISOString();
           }
+
+          if(field == 'recebido' ){
+            job['dataRecebido'] = new Date(localDate.getTime()).toISOString();
+          }
+
+          if(field == 'aprovado' ){
+            job['dataAprovado'] = new Date(localDate.getTime()).toISOString();
+          }
+
 
           // Atualiza o campo
           job[field] = !job[field];
@@ -273,6 +282,14 @@ const JobController = {
           for (const job of jobs) {
             if (field === "pago") {
               job["dataPgto"] = new Date(localDate.getTime()).toISOString();
+            }
+
+            if(field == 'recebido' ){
+              job['dataRecebido'] = new Date(localDate.getTime()).toISOString();
+            }
+  
+            if(field == 'aprovado' ){
+              job['dataAprovado'] = new Date(localDate.getTime()).toISOString();
             }
       
             job[field] = !job[field]; // Inverte o valor do campo
