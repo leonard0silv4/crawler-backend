@@ -195,7 +195,10 @@ export default {
         if (username) faccionista.username = username;
         if (lastName) faccionista.lastName = lastName;
         if (pixKey) faccionista.pixKey = pixKey;
-        if (advanceMoney) faccionista.advanceMoney = advanceMoney;
+        
+        if (req.body.hasOwnProperty('advanceMoney')) {
+          faccionista.advanceMoney = advanceMoney;
+        }
 
         // Se uma nova senha for fornecida, a senha deve ser criptografada
         if (password) {
