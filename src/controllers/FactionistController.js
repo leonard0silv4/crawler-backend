@@ -34,12 +34,12 @@ export default {
 
       const recentLotes = jobsWithRate
         .sort((a, b) => new Date(b.data) - new Date(a.data)) 
+        .slice(0, 10) 
         .map((job) => ({
           lote: job.lote,
           rateLote: job.rateLote === 10 ? job.rateLote : `0${job.rateLote}`,
         }));
 
-        console.log(recentLotes)
 
       const jobSummary = jobs.reduce(
         (summary, job) => {
