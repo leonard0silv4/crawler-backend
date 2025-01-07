@@ -10,7 +10,7 @@ export default {
 
       const jobs = await Job.find({ faccionistaId: faccionistId, pago: true })
         .setOptions({ bypassMiddleware: true })
-        .select("orcamento rateLote lote advancedMoneyPayment isArchived pago")
+        .select("orcamento rateLote lote advancedMoneyPayment isArchived pago data")
         .lean();
 
       
@@ -33,12 +33,13 @@ export default {
       
 
       const recentLotes = jobsWithRate
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) 
-        .slice(0, 10) 
+        .sort((a, b) => new Date(b.data) - new Date(a.data)) 
         .map((job) => ({
           lote: job.lote,
           rateLote: job.rateLote === 10 ? job.rateLote : `0${job.rateLote}`,
         }));
+
+        console.log(recentLotes)
 
       const jobSummary = jobs.reduce(
         (summary, job) => {
