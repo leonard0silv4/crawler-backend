@@ -3,6 +3,7 @@ const userSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
     password: { type: String, required: true },
     role: { type: String, enum: ["owner", "faccionista"], required: true }, // Define o tipo de usuário
+    roleId: { type: mongoose.Schema.Types.ObjectId, ref: "Role" },
     plan: { type: String },
     sendEmail: { type: Boolean },
     storeName: { type: String },
