@@ -197,11 +197,16 @@ const JobController = {
           
             // Ajusta orçamento com base na emenda
             let orcamento = totMetros * custoPorMetro;
+
           
             if (job.emenda) {
               // Adiciona custo da emenda e ajusta totMetros
               totMetros = (larg * 2 + compr * 3) * qtd;
               orcamento = totMetros * custoPorMetro;
+              job.qtdRolo =  (
+                ((larg * 2 + compr * 2) * qtd) /
+                50
+              ).toFixed(2);
             }
           
             // Atualiza os valores no job
