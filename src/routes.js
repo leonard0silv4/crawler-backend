@@ -18,7 +18,7 @@ routes.get("/",  (req, res) => {
 routes.get("/health",  async (req, res) => {
     res.json({
         date : new Date(),
-        status : 'ok : v1.2'
+        status : 'ok : v1.3'
     })    
 });
 
