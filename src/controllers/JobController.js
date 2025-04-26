@@ -1,7 +1,7 @@
 import Job from "../models/Job.js";
 import verifyToken from "../middleware/authMiddleware.js";
 
-const custoPorMetro = 0.6;
+const custoPorMetro = 0.4;
 
 const JobController = {
 
