@@ -35,7 +35,9 @@ const LinkController = {
           status,
           seller,
           dateMl,
-          tags: [tag],
+          ...tag.length ? {
+            tags: [tag],
+          } : {},          
           myPrice: Number(myPrice),
           nowPrice: Number(price),
           lastPrice: Number(price),
