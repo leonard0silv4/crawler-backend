@@ -1,7 +1,11 @@
 import cron from 'node-cron';
 
 import UserController from "./UserController.js";
+import Conta from "../models/Conta.js";
+
 import LinkController from "./mercadolivre_shopee/LinkController.js";
+import  {updateProductsAccount}  from "../services/updateProductsAccount.js";
+
 
 let scheduledCrons = {}; // Armazenar crons ativos por usuário
 
@@ -50,5 +54,13 @@ export default {
     } catch (error) {
       console.error("Erro na rotina de atualização:", error);
     }
+  },
+
+  async cronUserMeli() {
+  const contas = await Conta.find({ access_token: { $exists: true } });
+
+  for (const conta of contas) {
+    await updateProductsAccount(conta);
   }
-};
+  }
+}

@@ -6,6 +6,7 @@ import MailController from './controllers/MailController.js';
 import FactionistController from './controllers/FactionistController.js';
 import JobController from './controllers/JobController.js';
 import PdfController from './controllers/PdfController.js';
+import MeliController from './controllers/MeliController.js';
 
 import verifyJWT from './middleware/authMiddleware.js'
 
@@ -64,6 +65,19 @@ routes.put("/jobs/splitAdvancedMoney", verifyJWT.isTokenized, JobController.upda
 
 // Rota pdf
 routes.post("/report/pdf", verifyJWT.isTokenized, PdfController.index);
+
+// Rotas Meli connection
+routes.get('/auth', MeliController.authRedirect);
+routes.get('/callback', MeliController.authCallback);
+routes.get('/accounts/', MeliController.getAccounts);
+routes.get('/accounts/products', MeliController.listarProdutos);
+routes.post('/callback/api/hook',  async(req, res) => {
+    res.json({
+        date : new Date(),
+        status : 'callback ML : v1.3',
+    })    
+});
+
 
 
 routes.get("/events", (req, res) => {

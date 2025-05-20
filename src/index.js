@@ -32,6 +32,12 @@ cron.schedule("*/30 * * * *", () => {
   CronController.cronUsers();
 });
 
+//  cron.schedule("*/1 * * * *", async () => {
+ cron.schedule("0 2 * * *", async () => {
+  console.log("🔁 Executando rotina diária de coleta de produtos...");
+  await CronController.cronUserMeli();
+});
+
 // Middlewares
 app.use(cors());
 app.use(express.json());
