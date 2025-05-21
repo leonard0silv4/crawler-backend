@@ -2,7 +2,6 @@ import Conta from "../models/Conta.js";
 import MeliProduct from "../models/Meli_products.js";
 import jwt from "jsonwebtoken";
 
-
 import axios from "axios";
 
 const CLIENT_ID = process.env.ML_CLIENT_ID;
@@ -11,10 +10,9 @@ const REDIRECT_URI = process.env.ML_REDIRECT_URI;
 
 export default {
   async authRedirect(req, res) {
-      const token = req.query.token;
-      const decoded = jwt.verify(token, process.env.SECRET);
-      const uid = decoded.userId;
-      
+    const token = req.query.token;
+    const decoded = jwt.verify(token, process.env.SECRET);
+    const uid = decoded.userId;
 
     const redirectUrl = `https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&state=${uid}`;
     res.redirect(redirectUrl);
@@ -64,7 +62,9 @@ export default {
         { upsert: true }
       );
 
-      res.send(`Conta ${nickname} conectada com sucesso! pode retornar a tela principal`);
+      res.send(
+        `Conta ${nickname} conectada com sucesso! pode retornar a tela principal`
+      );
     } catch (err) {
       console.error("Erro na autenticação:", err.response?.data || err.message);
       res.status(500).send("Erro ao autenticar");
@@ -72,7 +72,6 @@ export default {
   },
 
   async listarProdutos(req, res) {
-
     const { user_id } = req.query;
 
     if (!user_id) {
@@ -80,18 +79,19 @@ export default {
     }
 
     try {
-       const produtos = await MeliProduct.find({ user_id: Number(user_id) });
-    return res.json(produtos);
+      const produtos = await MeliProduct.find({ user_id: Number(user_id) });
+      return res.json(produtos);
     } catch (err) {
       console.error(err.response?.data || err.message);
       res.status(500).send("Erro ao listar produtos");
     }
   },
 
-  async getAccounts(req, res){
-       const Contas = await Conta.find();
-       res.json(Contas);
-  }
+  async getAccounts(req, res) {
+    const contas = await Conta.find({
+      access_token: { $exists: true },
+      $or: [{ disabled: { $exists: false } }, { disabled: false }],
+    });
+    res.json(contas);
+  },
 };
-
-

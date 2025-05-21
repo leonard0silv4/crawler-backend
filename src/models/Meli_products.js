@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 const HistorySellSchema = new mongoose.Schema({
   day: { type: Date, required: true },
   sellQty: { type: Number, required: true },
-  sellQtyAcumulado: { type: Number }, // aux
+  sellQtyAcumulado: { type: Number }, 
+  shippingCost: { type: Number }, 
 });
 
 const MeliProductSchema = new mongoose.Schema({
@@ -25,7 +26,10 @@ const MeliProductSchema = new mongoose.Schema({
   contaId: { type: mongoose.Schema.Types.ObjectId, ref: "Conta" },
   user_id: Number,
   averageSellDay: Number,
+  shippingCost: Number,
   nickname: String,
+  isFull : Boolean,
+  listingTypeId: String,
   historySell: [HistorySellSchema],
 }, { timestamps: true });
 

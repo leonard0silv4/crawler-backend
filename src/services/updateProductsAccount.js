@@ -1,6 +1,62 @@
 import axios from "axios";
+import Bottleneck from "bottleneck";
 import MeliProduct from "../models/Meli_products.js";
 import { renovarTokenSeNecessario } from "../utils/meliService.js";
+
+// Limite de 5 requisições por segundo
+const limiter = new Bottleneck({
+  minTime: 200, // 200ms entre chamadas
+});
+
+const shippingCostCache = new Map(); // chave: categoria_tipo_faixa, valor: custo vendedor
+
+function arredondarPrecoParaFaixa(preco, faixa = 10) {
+  return Math.ceil(preco / faixa) * faixa;
+}
+
+function gerarChaveFrete(category_id, listing_type_id, price) {
+  const faixaPreco = arredondarPrecoParaFaixa(price);
+  return `${category_id}_${listing_type_id}_${faixaPreco}`;
+}
+
+const obterCustoFreteProduto = limiter.wrap(async function (item) {
+  const chave = gerarChaveFrete(item.category_id, item.listing_type_id, item.price);
+
+  if (shippingCostCache.has(chave)) {
+    return shippingCostCache.get(chave);
+  }
+
+  const zipCode = "01001-000"; // CEP fixo
+
+  for (let tentativa = 1; tentativa <= 3; tentativa++) {
+    try {
+      const { data } = await axios.get(
+        `https://api.mercadolibre.com/items/${item.id}/shipping_options`,
+        { params: { zip_code: zipCode } }
+      );
+
+      const opcao = data.options?.[0];
+      const custoVendedor = opcao?.list_cost ?? 0;
+
+      shippingCostCache.set(chave, custoVendedor);
+      return custoVendedor;
+    } catch (err) {
+      const status = err.response?.status;
+      const isTransient =
+        status === 500 || status === 503 || err.message.includes("timeout");
+
+      if (tentativa < 3 && isTransient) {
+        console.warn(`Tentativa ${tentativa} falhou para ${item.id}. Retentando...`);
+        await new Promise((r) => setTimeout(r, 500 * tentativa)); // espera antes de tentar de novo
+      } else {
+        console.warn("Erro ao obter frete:", item.id, err.response?.data || err.message);
+        return null;
+      }
+    }
+  }
+});
+
+
 
 export async function updateProductsAccount(conta) {
   try {
@@ -8,14 +64,14 @@ export async function updateProductsAccount(conta) {
     const { user_id, _id: contaId, nickname } = conta;
 
     let offset = 0;
-    const limit = 50;
+    const limit = 30;
     const itemIds = [];
 
     while (true) {
       const { data } = await axios.get(
         `https://api.mercadolibre.com/users/${user_id}/items/search`,
         {
-          params: { status: "active", offset, limit },
+          params: { status: "active", limit, offset },
           headers: { Authorization: `Bearer ${access_token}` },
         }
       );
@@ -47,6 +103,8 @@ export async function updateProductsAccount(conta) {
 
         const produto = await MeliProduct.findOne({ id: item.id });
 
+        const shippingCost = await obterCustoFreteProduto(item);
+
         let novoRegistro;
         if (produto?.historySell?.length) {
           const ultimo = produto.historySell.at(-1);
@@ -57,30 +115,41 @@ export async function updateProductsAccount(conta) {
             day: hoje,
             sellQty: Math.max(0, sellQtyDia),
             sellQtyAcumulado: item.sold_quantity,
+            shippingCost
           };
         } else {
-          // Primeira coleta: marcar como 0 (neutro), só pra iniciar a contagem
           novoRegistro = {
             day: hoje,
             sellQty: 0,
             sellQtyAcumulado: item.sold_quantity,
+            shippingCost
           };
         }
 
-        // Calcular média de vendas por dia
         const diasDesdeInicio = Math.max(
           1,
           (Date.now() - new Date(item.start_time)) / (1000 * 60 * 60 * 24)
         );
         const averageSellDay = item.sold_quantity / diasDesdeInicio;
 
+        const isFull = item.shipping?.logistic_type === "fulfillment";
+        const estoqueFull = isFull ? item.available_quantity : 0;
+        const estoqueNormal = isFull ? 0 : item.available_quantity;
+        const salePrice = item.sale_price ?? item.price;
+
+        
+
         const docData = {
           id: item.id,
           SKU,
+          shippingCost,
           title: item.title,
           image,
-          price: item.price,
-          available_quantity: item.available_quantity,
+          listingTypeId: item.listing_type_id,
+          price: salePrice,
+          isFull,
+          available_quantity: estoqueNormal,
+          estoque_full: estoqueFull,
           sold_quantity: item.sold_quantity,
           thumbnail: item.thumbnail,
           permalink: item.permalink,
@@ -88,7 +157,6 @@ export async function updateProductsAccount(conta) {
           stop_time: item.stop_time,
           expiration_time: item.expiration_time,
           status: item.status,
-          estoque_full: item.fulfillment?.quantity || 0,
           health: item.health ?? null,
           contaId,
           averageSellDay,
@@ -98,15 +166,10 @@ export async function updateProductsAccount(conta) {
 
         if (produto) {
           Object.assign(produto, docData);
-
-          // Empurra novo registro para o final
           produto.historySell.push(novoRegistro);
-
-          // Limita para no máximo 4 itens (mantém os 4 mais recentes)
           if (produto.historySell.length > 4) {
             produto.historySell = produto.historySell.slice(-4);
           }
-
           await produto.save();
         } else {
           await MeliProduct.create({

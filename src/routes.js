@@ -7,6 +7,7 @@ import FactionistController from './controllers/FactionistController.js';
 import JobController from './controllers/JobController.js';
 import PdfController from './controllers/PdfController.js';
 import MeliController from './controllers/MeliController.js';
+import CronController from './controllers/CronController.js';
 
 import verifyJWT from './middleware/authMiddleware.js'
 
@@ -68,6 +69,7 @@ routes.post("/report/pdf", verifyJWT.isTokenized, PdfController.index);
 
 // Rotas Meli connection
 routes.get('/auth', MeliController.authRedirect);
+routes.get('/teste', CronController.cronUserMeli);
 routes.get('/callback', MeliController.authCallback);
 routes.get('/accounts/', MeliController.getAccounts);
 routes.get('/accounts/products', MeliController.listarProdutos);

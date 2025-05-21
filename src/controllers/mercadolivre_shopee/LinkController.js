@@ -409,13 +409,13 @@ const LinkController = {
         };
 
         if (
-          (price && Number(dataLink[i].nowPrice) != Number(price)) ||
+          (price && Number(dataLink[i].nowPrice ?? 0) != Number(price ?? 0)) ||
           autoPrice ||
           status != dataLink[i].status ||
           dataLink[i].seller != seller
         ) {
           asUpdate.lastPrice = dataLink[i].nowPrice;
-          asUpdate.nowPrice = Number(price);
+          asUpdate.nowPrice = Number(price ?? 0);
           res.write(`data: ${JSON.stringify(asUpdate)}\n\n`);
         }
 

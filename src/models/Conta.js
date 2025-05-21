@@ -6,7 +6,8 @@ const ContaSchema = new mongoose.Schema({
   access_token: String,
   refresh_token: String,
   expires_at: Date, 
-  uid: String
+  uid: String,
+  disabled : Boolean
 }, { timestamps: true });
 
 export default mongoose.model('Conta', ContaSchema);
