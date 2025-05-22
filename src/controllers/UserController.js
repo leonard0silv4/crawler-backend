@@ -1,6 +1,8 @@
 import "dotenv/config";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import Role from "../models/Role.js"; // 👈 Isso é essencial
+import Permission from "../models/Permission.js"; // 👈 Também
 import bcrypt from "bcrypt";
 import verifyToken from "../middleware/authMiddleware.js";
 
@@ -8,7 +10,15 @@ export default {
   async login(req, res) {
     try {
       const { username, password } = req.body;
-      const user = await User.findOne({ username });
+
+      // Popula a roleId com as permissões
+      const user = await User.findOne({ username }).populate({
+        path: "roleId",
+        populate: {
+          path: "permissions",
+        },
+      });
+
       if (!user)
         return res.status(401).json({ error: "Usuário não encontrado" });
 
@@ -16,13 +26,22 @@ export default {
       if (!passwordMatch)
         return res.status(401).json({ error: "Falha na autenticação" });
 
-      const token = jwt.sign({ userId: user._id, roleUser: user.role }, process.env.SECRET, {
-        expiresIn: "365d",
-      });
+      const permissions = user.roleId?.permissions?.map((p) => p.name) || [];
 
-      res.status(200).json({ token, role : user.role });
+      const token = jwt.sign(
+        { userId: user._id, roleUser: user.role, permissions },
+        process.env.SECRET,
+        { expiresIn: "365d" }
+      );
+
+      res.status(200).json({
+        token,
+        role: user.role,
+        permissions,
+      });
     } catch (error) {
-      res.status(500).json({ error: "stacktrace login" });
+      console.error("Erro no login:", error);
+      res.status(500).json({ error: "Erro interno no login" });
     }
   },
 
@@ -57,7 +76,12 @@ export default {
       await User.findOneAndUpdate(
         { _id: userId },
         {
-          $set: { storeName, emailNotify, sendEmail, cronInterval :  `0 ${hour} * * *` },
+          $set: {
+            storeName,
+            emailNotify,
+            sendEmail,
+            cronInterval: `0 ${hour} * * *`,
+          },
         }
       ).then((obj) => {
         return res.json(obj);
@@ -66,9 +90,6 @@ export default {
       return res.status(500).json({ error: "Erro ao atualizar usuários:" });
     }
   },
-
-
-
 
   async register(req, res) {
     try {

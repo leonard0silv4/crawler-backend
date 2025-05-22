@@ -20,7 +20,11 @@ function gerarChaveFrete(category_id, listing_type_id, price) {
 }
 
 const obterCustoFreteProduto = limiter.wrap(async function (item) {
-  const chave = gerarChaveFrete(item.category_id, item.listing_type_id, item.price);
+  const chave = gerarChaveFrete(
+    item.category_id,
+    item.listing_type_id,
+    item.price
+  );
 
   if (shippingCostCache.has(chave)) {
     return shippingCostCache.get(chave);
@@ -46,17 +50,21 @@ const obterCustoFreteProduto = limiter.wrap(async function (item) {
         status === 500 || status === 503 || err.message.includes("timeout");
 
       if (tentativa < 3 && isTransient) {
-        console.warn(`Tentativa ${tentativa} falhou para ${item.id}. Retentando...`);
+        console.warn(
+          `Tentativa ${tentativa} falhou para ${item.id}. Retentando...`
+        );
         await new Promise((r) => setTimeout(r, 500 * tentativa)); // espera antes de tentar de novo
       } else {
-        console.warn("Erro ao obter frete:", item.id, err.response?.data || err.message);
+        console.warn(
+          "Erro ao obter frete:",
+          item.id,
+          err.response?.data || err.message
+        );
         return null;
       }
     }
   }
 });
-
-
 
 export async function updateProductsAccount(conta) {
   try {
@@ -115,14 +123,14 @@ export async function updateProductsAccount(conta) {
             day: hoje,
             sellQty: Math.max(0, sellQtyDia),
             sellQtyAcumulado: item.sold_quantity,
-            shippingCost
+            shippingCost,
           };
         } else {
           novoRegistro = {
             day: hoje,
             sellQty: 0,
             sellQtyAcumulado: item.sold_quantity,
-            shippingCost
+            shippingCost,
           };
         }
 
@@ -137,7 +145,30 @@ export async function updateProductsAccount(conta) {
         const estoqueNormal = isFull ? 0 : item.available_quantity;
         const salePrice = item.sale_price ?? item.price;
 
-        
+        const estoqueAtualTotal =
+          (item.estoque_full ?? 0) + (item.available_quantity ?? 0);
+
+        const registrosRecentes = produto.historySell?.slice(-4) ?? [];
+        const totalDias = registrosRecentes.length || 1; // evita divisão por 0
+        const vendasRecentes = registrosRecentes.reduce(
+          (acc, h) => acc + h.sellQty,
+          0
+        );
+        const media4Dias = vendasRecentes / totalDias;
+
+        const daysRestStock =
+          media4Dias > 0 ? estoqueAtualTotal / media4Dias : Infinity;
+
+        let alertRuptura = null;
+        if (totalDias >= 3) {
+          if (daysRestStock <= 7) {
+            alertRuptura = "Estoque pode acabar em menos de uma semana";
+          } else if (daysRestStock <= 14) {
+            alertRuptura = "Estoque suficiente para ~2 semanas";
+          }
+        } else {
+          alertRuptura = "Dados insuficientes para previsão";
+        }
 
         const docData = {
           id: item.id,
@@ -162,6 +193,8 @@ export async function updateProductsAccount(conta) {
           averageSellDay,
           nickname,
           user_id,
+          daysRestStock,
+          alertRuptura,
         };
 
         if (produto) {

@@ -71,8 +71,8 @@ routes.post("/report/pdf", verifyJWT.isTokenized, PdfController.index);
 routes.get('/auth', MeliController.authRedirect);
 routes.get('/teste', CronController.cronUserMeli);
 routes.get('/callback', MeliController.authCallback);
-routes.get('/accounts/', MeliController.getAccounts);
-routes.get('/accounts/products', MeliController.listarProdutos);
+routes.get('/accounts/',verifyJWT.isTokenized, MeliController.getAccounts);
+routes.get('/accounts/products',verifyJWT.isTokenized, MeliController.listarProdutos);
 routes.post('/callback/api/hook',  async(req, res) => {
     res.json({
         date : new Date(),

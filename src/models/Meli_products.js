@@ -30,6 +30,8 @@ const MeliProductSchema = new mongoose.Schema({
   nickname: String,
   isFull : Boolean,
   listingTypeId: String,
+  alertRuptura: String,
+  daysRestStock: Number,
   historySell: [HistorySellSchema],
 }, { timestamps: true });
 
