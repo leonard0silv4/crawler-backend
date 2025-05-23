@@ -1,6 +1,7 @@
 import Conta from "../models/Conta.js";
 import MeliProduct from "../models/Meli_products.js";
 import jwt from "jsonwebtoken";
+import { updateProductsAccount } from "../services/updateProductsAccount.js";
 
 import axios from "axios";
 
@@ -50,7 +51,7 @@ export default {
 
       const nickname = userInfo.data.nickname;
 
-      await Conta.findOneAndUpdate(
+      const contaAtualizada = await Conta.findOneAndUpdate(
         { user_id },
         {
           access_token,
@@ -59,11 +60,12 @@ export default {
           expires_at: new Date(Date.now() + expires_in * 1000),
           uid,
         },
-        { upsert: true }
+        { upsert: true, new: true }
       );
 
+      updateProductsAccount(contaAtualizada);
       res.send(
-        `Conta ${nickname} conectada com sucesso! pode retornar a tela principal`
+        `Conta ${nickname} conectada com sucesso! Estamos buscando seus produtos...`
       );
     } catch (err) {
       console.error("Erro na autenticação:", err.response?.data || err.message);
