@@ -148,7 +148,7 @@ export async function updateProductsAccount(conta) {
         const estoqueAtualTotal =
           (item.estoque_full ?? 0) + (item.available_quantity ?? 0);
 
-        const registrosRecentes = produto.historySell?.slice(-4) ?? [];
+        const registrosRecentes = produto?.historySell?.slice(-4) ?? [];
         const totalDias = registrosRecentes.length || 1; // evita divisão por 0
         const vendasRecentes = registrosRecentes.reduce(
           (acc, h) => acc + h.sellQty,
@@ -162,7 +162,7 @@ export async function updateProductsAccount(conta) {
         let alertRuptura = null;
         if (totalDias >= 3) {
           if (daysRestStock <= 7) {
-            alertRuptura = "Estoque pode acabar em menos de uma semana";
+            alertRuptura = "Estoque pode acabar em menos de 1 semana";
           } else if (daysRestStock <= 14) {
             alertRuptura = "Estoque suficiente para ~2 semanas";
           }
