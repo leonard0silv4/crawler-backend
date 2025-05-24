@@ -1,7 +1,7 @@
 import axios from "axios";
 import Bottleneck from "bottleneck";
 import MeliProduct from "../models/Meli_products.js";
-import { renovarTokenSeNecessario } from "../utils/meliService.js";
+import { renewToken } from "../utils/meliService.js";
 
 // Limite de 5 requisições por segundo
 const limiter = new Bottleneck({
@@ -68,7 +68,7 @@ const obterCustoFreteProduto = limiter.wrap(async function (item) {
 
 export async function updateProductsAccount(conta) {
   try {
-    const access_token = await renovarTokenSeNecessario(conta);
+    const access_token = await renewToken(conta);
     const { user_id, _id: contaId, nickname } = conta;
 
     let offset = 0;

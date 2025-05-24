@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export async function renovarTokenSeNecessario(conta) {
+export async function renewToken(conta) {
   const agora = new Date();
   if (agora < conta.expires_at) {
     return conta.access_token;
