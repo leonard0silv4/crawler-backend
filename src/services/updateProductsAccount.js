@@ -79,7 +79,7 @@ export async function updateProductsAccount(conta) {
       const { data } = await axios.get(
         `https://api.mercadolibre.com/users/${user_id}/items/search`,
         {
-          params: { status: "active", limit, offset },
+          params: {  limit, offset },
           headers: { Authorization: `Bearer ${access_token}` },
         }
       );
