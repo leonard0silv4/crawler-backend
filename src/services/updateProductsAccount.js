@@ -103,7 +103,7 @@ export async function updateProductsAccount(conta) {
 
       for (const itemWrap of res.data) {
         const item = itemWrap.body;
-        if (!item || item.status !== "active") continue;
+        if (!item ) continue;
 
         const hoje = new Date();
         const image = item.pictures?.[0]?.url || "";
