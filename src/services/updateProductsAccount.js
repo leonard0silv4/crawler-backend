@@ -71,24 +71,34 @@ export async function updateProductsAccount(conta) {
     const access_token = await renewToken(conta);
     const { user_id, _id: contaId, nickname } = conta;
 
-    let offset = 0;
-    const limit = 30;
+    const tipos = ['gold_pro', 'gold_special', 'silver', 'bronze']; 
     const itemIds = [];
 
-    while (true) {
-      const { data } = await axios.get(
-        `https://api.mercadolibre.com/users/${user_id}/items/search`,
-        {
-          params: {  limit, offset },
-          headers: { Authorization: `Bearer ${access_token}` },
-        }
-      );
 
-      itemIds.push(...data.results);
-      if (itemIds.length >= data.paging.total) break;
+for (const tipo of tipos) {
+  let offset = 0;
+  const limit = 50;
 
-      offset += limit;
-    }
+  while (true) {
+    const { data } = await axios.get(
+      `https://api.mercadolibre.com/users/${user_id}/items/search`,
+      {
+        params: {
+          limit,
+          offset,
+          listing_type_id: tipo,
+        },
+        headers: { Authorization: `Bearer ${access_token}` },
+      }
+    );
+
+    itemIds.push(...data.results);
+
+    if (data.results.length < limit) break;
+    offset += limit;
+    await new Promise((r) => setTimeout(r, 200));
+  }
+}
 
     if (!itemIds.length) return;
 

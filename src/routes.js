@@ -10,6 +10,7 @@ import MeliController from './controllers/MeliController.js';
 import CronController from './controllers/CronController.js';
 
 import verifyJWT from './middleware/authMiddleware.js'
+import NfController from './controllers/NfController.js';
 
 const routes = express.Router();
 
@@ -79,6 +80,9 @@ routes.post('/callback/api/hook',  async(req, res) => {
         status : 'callback ML : v1.3',
     })    
 });
+
+// Routas Nf xml
+routes.post('/xml', NfController.index);
 
 
 
