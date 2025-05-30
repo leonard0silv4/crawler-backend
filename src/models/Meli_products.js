@@ -33,6 +33,18 @@ const MeliProductSchema = new mongoose.Schema({
   alertRuptura: String,
   daysRestStock: Number,
   historySell: [HistorySellSchema],
+  variations: [
+  {
+    id: String,
+    attributes: [
+      {
+        name: String,
+        value_name: String,
+      },
+    ],
+    available_quantity: Number,
+  },
+],
 }, { timestamps: true });
 
 export default mongoose.model("MeliProduct", MeliProductSchema);

@@ -180,6 +180,15 @@ for (const tipo of tipos) {
           alertRuptura = "Dados insuficientes para previsão";
         }
 
+        const variations = item.variations?.map(variacao => ({
+          id: variacao.id,
+          attributes: variacao.attribute_combinations?.map(attr => ({
+            name: attr.name,
+            value_name: attr.value_name,
+          })) || [],
+          available_quantity: variacao.available_quantity ?? 0,
+        })) ?? [];
+
         const docData = {
           id: item.id,
           SKU,
@@ -205,6 +214,7 @@ for (const tipo of tipos) {
           user_id,
           daysRestStock,
           alertRuptura,
+          variations
         };
 
         if (produto) {
