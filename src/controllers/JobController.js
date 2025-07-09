@@ -1,5 +1,7 @@
 import Job from "../models/Job.js";
 import verifyToken from "../middleware/authMiddleware.js";
+import LogController from "./LogController.js";
+
 
 const custoPorMetro = 0.4;
 
@@ -16,7 +18,9 @@ const JobController = {
   async storeJob(req, res) {
     const localDate = new Date();
 
-      const ownerId = await verifyToken.recoverUid(req, res);
+      
+      const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+      const uidToQuery = role === "owner" ? String(userId) : String(ownerId);
 
         const {
           lote,
@@ -58,10 +62,20 @@ const JobController = {
             pago,
             dataPgto,
             faccionistaId,
-            ownerId,
+            ownerId : uidToQuery,
           });
     
           const jobSaved = await job.save();
+
+          await LogController.logJobChange({
+            jobId: jobSaved._id,
+            userId,
+            action: "create",
+            newValue: jobSaved.toObject(),
+            req,
+            res
+          });
+
           return res.send(jobSaved);
         } catch (error) {
           return res.end("Erro ao salvar costura:", error);
@@ -87,6 +101,8 @@ const JobController = {
         const { id } = req.params;
         const { field, ids } = req.body;
         const localDate = new Date();
+        const userId = await verifyToken.recoverUid(req, res);
+
         
     
         if (!["recebidoConferido", "lotePronto", "pago" , "lotePronto" , "aprovado" , "recebido", "emenda", "isArchived"].includes(field)) {
@@ -123,6 +139,7 @@ const JobController = {
 
 
           // Atualiza o campo
+          const oldValue = job[field];
           job[field] = !job[field];
 
           if (field === "emenda") {
@@ -157,6 +174,17 @@ const JobController = {
 
     
           await job.save();
+
+          await LogController.logJobChange({
+            jobId: job._id,
+            userId,
+            action: "update",
+            field,
+            oldValue,
+            newValue: job[field],
+            req,
+            res
+          });
     
           return res.json({ message: "Job atualizado com sucesso.", job });
         } catch (error) {
@@ -169,6 +197,8 @@ const JobController = {
 
         const { id, field, value } = req.body; 
 
+        const userId = await verifyToken.recoverUid(req, res);
+
         // Validação do campo
         if (!["qtd", "larg", "compr"].includes(field)) {
           return res.status(400).json({ error: "Campo inválido para atualização." });
@@ -180,9 +210,10 @@ const JobController = {
           if (!job) {
             return res.status(404).json({ error: "Job não encontrado." });
           }
-          
-          // Atualiza o campo
-          job[field] = value;
+
+            
+            const oldValue = job[field];
+            job[field] = value;
 
           
             // Pegando os valores necessários do job
@@ -221,7 +252,19 @@ const JobController = {
 
     
           await job.save();
-    
+
+          await LogController.logJobChange({
+                jobId: job._id,
+                userId,
+                action: "update",
+                field,
+                oldValue,
+                newValue: value,
+                req,
+                res
+          });
+
+      
           return res.json({ message: "Job atualizado com sucesso.", job });
         } catch (error) {
           console.error("Erro ao atualizar job:", error);
@@ -233,13 +276,26 @@ const JobController = {
 
       async updateRate(req, res){
         const { id, value } = req.body; 
+        const userId = await verifyToken.recoverUid(req, res);
 
         try{
           const job = await Job.findById(id);
+          const oldRate = job.rateLote;
+
           
           job.rateLote = value
 
           await job.save();
+          await LogController.logJobChange({
+            jobId: job._id,
+            userId,
+            action: "update",
+            field: "rateLote",
+            oldValue: oldRate,
+            newValue: value,
+            req,
+            res
+          });
 
           JobController.emitSSE("jobUpdated", { job });
 
@@ -270,7 +326,10 @@ const JobController = {
 
         const localDate = new Date();
 
-        const { ids, field } = req.body; // Recebe os IDs como um array no corpo da requisição
+        const { ids, field } = req.body; 
+
+        const userId = await verifyToken.recoverUid(req, res);
+
         
         // Validação do campo
         if (!["recebidoConferido", "lotePronto", "pago", "aprovado", "recebido", "emenda", "emAnalise", "isArchived"].includes(field)) {
@@ -297,8 +356,9 @@ const JobController = {
             if(field == 'aprovado' ){
               job['dataAprovado'] = new Date(localDate.getTime()).toISOString();
             }
-      
-            job[field] = !job[field]; // Inverte o valor do campo
+            
+            const oldValue = job[field];
+            job[field] = !job[field]; 
             
             if (field == "recebido") {
               if(job["aprovado"] == false){
@@ -337,7 +397,17 @@ const JobController = {
             }
 
             
-            await job.save(); // Salva as alterações
+            await job.save(); 
+            await LogController.logJobChange({
+              jobId: job._id,
+              userId,
+              action: "update",
+              field,
+              oldValue,
+              newValue: job[field],
+              req,
+              res
+            });
             
             JobController.emitSSE("jobUpdated", { job });
           }
@@ -353,6 +423,7 @@ const JobController = {
 
       async updateJobHasSplit(req, res){
         const {ids , value} = req.body
+        const userId = await verifyToken.recoverUid(req, res);
 
         try {
           // Busca e atualiza todos os Jobs correspondentes
@@ -365,7 +436,16 @@ const JobController = {
           for (const job of jobs) {
             job.advancedMoneyPayment = value;
             await job.save(); 
-            
+            await LogController.logJobChange({
+              jobId: job._id,
+              userId,
+              action: "update",
+              field: "advancedMoneyPayment",
+              oldValue,
+              newValue: value,
+              req,
+              res
+            });
           }
       
           

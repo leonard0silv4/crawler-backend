@@ -8,6 +8,9 @@ import JobController from './controllers/JobController.js';
 import PdfController from './controllers/PdfController.js';
 import MeliController from './controllers/MeliController.js';
 import CronController from './controllers/CronController.js';
+import LogController from './controllers/LogController.js';
+import RoleController from './controllers/RoleController.js';
+import PermissionController from './controllers/PermissionController.js';
 
 import verifyJWT from './middleware/authMiddleware.js'
 import NfController from './controllers/NfController.js';
@@ -42,9 +45,25 @@ routes.delete("/links/clearAll/:storeName",verifyJWT.isTokenized,  LinkControlle
 
 // Rotas de usuário
 routes.post("/login", UserController.login);
-routes.post("/register", UserController.register);
 routes.get("/config", verifyJWT.isTokenized, UserController.getUserConfig);
 routes.post("/saveConfig", verifyJWT.isTokenized, UserController.saveConfig);
+
+// Rotas de gerencia de usuarios
+routes.get("/users",verifyJWT.isTokenized, UserController.index);
+routes.post("/users",verifyJWT.isTokenized, UserController.store);
+routes.put('/users/:id', verifyJWT.isTokenized, UserController.update);
+routes.delete('/users/:id', verifyJWT.isTokenized, UserController.destroy);
+
+// Roles
+routes.get("/roles", RoleController.index);
+routes.get("/roles/:id", RoleController.show);
+routes.post("/roles", RoleController.store);
+routes.delete("/roles/:id", RoleController.delete);
+
+
+// Permissions
+routes.get("/permissions", PermissionController.index);
+
 
 // Rotas faccionista
 routes.post("/factionist", verifyJWT.isTokenized, FactionistController.store);
@@ -68,9 +87,13 @@ routes.put("/jobs/splitAdvancedMoney", verifyJWT.isTokenized, JobController.upda
 // Rota pdf
 routes.post("/report/pdf", verifyJWT.isTokenized, PdfController.index);
 
+// Logs
+routes.get("/logs", verifyJWT.isTokenized,  LogController.index); 
+
+
 // Rotas Meli connection
 routes.get('/auth', MeliController.authRedirect);
-routes.get('/teste', CronController.cronUserMeli);
+routes.get('/runcron', CronController.cronUserMeli);
 routes.get('/callback', MeliController.authCallback);
 routes.get('/accounts/',verifyJWT.isTokenized, MeliController.getAccounts);
 routes.get('/accounts/products',verifyJWT.isTokenized, MeliController.listarProdutos);

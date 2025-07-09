@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 const userSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["owner", "faccionista"], required: true }, // Define o tipo de usuário
+    role: { type: String, required: false }, 
     roleId: { type: mongoose.Schema.Types.ObjectId, ref: "Role" },
     plan: { type: String },
     sendEmail: { type: Boolean },
@@ -13,19 +13,21 @@ const userSchema = new mongoose.Schema({
     cronInterval: { type: String },
     pixKey: { type: String },
     advanceMoney: { type: Number },
-    advanceMoneyLastModified: { type: Date }, // Data da última modificação
+    advanceMoneyLastModified: { type: Date }, 
     address: { type: String },
     phone: { type: String },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: function () {
       return this.role === "faccionista";
-    } }, // Relaciona faccionistas ao usuário owner
+    } }, // relaciona faccionistas ao owner
   }, { timestamps: true });
 
   userSchema.pre('save', function (next) {
     if (this.isModified('advanceMoney')) {
-        this.advanceMoneyLastModified = new Date(); // Atualiza a data
+        this.advanceMoneyLastModified = new Date(); // atualiza data
     }
     next();
-});
+  });
+
+  
 
 export default mongoose.model('User', userSchema);

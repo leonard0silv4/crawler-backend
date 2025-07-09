@@ -86,23 +86,22 @@ export default {
 
   async index(req, res) {
     try {
-      const ownerId = verifyToken.recoverUid(req, res);
+      const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+      const uidToQuery = role === "owner" ? String(userId) : String(ownerId);
       let faccionists;
       const { faccionistId = null } = req.params;
       
-      // Busca os faccionistas relacionados ao ownerId
       if (faccionistId) {
-        faccionists = await User.find({ ownerId, _id: faccionistId }).select(
+        faccionists = await User.find({ role: 'faccionista', ownerId : uidToQuery, _id: faccionistId }).select(
           "-password"
         );
       } else {
-        faccionists = await User.find({ ownerId }).select("-password");
+        faccionists = await User.find({ ownerId : uidToQuery, role: 'faccionista' }).select("-password");
       }
 
       const faccionistsStatus = await Promise.all(
         faccionists.map(async (faccionista) => {
-          // jobs relacionados ao faccionista
-
+          
           const jobsRate = await Job.find({ faccionistaId: faccionista._id })
           .setOptions({ bypassMiddleware: true }).sort({
             data: -1,})
@@ -130,7 +129,6 @@ export default {
         })
       );
 
-      // Retorna os faccionistas com os campos jobs
       return res.json(faccionistsStatus);
     } catch (error) {
       console.error("Erro ao buscar faccionistas:", error);
@@ -142,12 +140,10 @@ export default {
     try {
       const { username, lastName, address, password, pixKey } = req.body;
       const hashedPassword = await bcrypt.hash(password, 10);
-      const ownerId = verifyToken.recoverUid(req, res);
-      const role = await verifyToken.recoverRole(req, res);
-
-      if (!ownerId || String(role).trim() !== "owner") {
-        throw new Error("Owner ID inválido ou o usuário não é um owner");
-      }
+      const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+      const uidToQuery = role === "owner" ? String(userId) : String(ownerId);
+      
+      
 
       // cria o faccionista
       const faccionista = new User({
@@ -157,7 +153,7 @@ export default {
         address,
         password: hashedPassword,
         role: "faccionista",
-        ownerId,
+        ownerId : uidToQuery,
       });
 
       await faccionista.save();
@@ -191,17 +187,14 @@ export default {
 
   async update(req, res) {
     try {
-      const ownerId = verifyToken.recoverUid(req, res);
+      const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+      const uidToQuery = role === "owner" ? String(userId) : String(ownerId);
       const { faccionistId } = req.params;
 
-      // Verifica se o usuário está autenticado e é um owner
-      if (!ownerId) {
-        return res.status(401).json({ error: "Usuário não autenticado" });
-      }
 
-      // Verifica se o owner está tentando atualizar seu próprio faccionista
+
       if (faccionistId) {
-        const faccionista = await User.findOne({ _id: faccionistId, ownerId });
+        const faccionista = await User.findOne({ _id: faccionistId, ownerId : uidToQuery });
 
         if (!faccionista) {
           return res.status(404).json({ error: "Faccionista não encontrado" });
@@ -209,7 +202,6 @@ export default {
 
         const { username, lastName, password, pixKey, advanceMoney } = req.body;
 
-        // Atualiza os campos que foram passados no corpo da requisição
         if (username) faccionista.username = username;
         if (lastName) faccionista.lastName = lastName;
         if (pixKey) faccionista.pixKey = pixKey;

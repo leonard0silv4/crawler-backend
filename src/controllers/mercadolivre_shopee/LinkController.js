@@ -7,6 +7,10 @@ import MailController from "../../controllers/MailController.js";
 
 const LinkController = {
   async store(req, res) {
+
+     const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+    const uidToQuery = role === "owner" ? userId : ownerId;
+
     try {
       const { link, myPrice, tag } = req.body;
       const {
@@ -23,7 +27,7 @@ const LinkController = {
       } = await UtilsController.getDataWithRetry(link);
       const dataLink = await Link.findOne({
         sku: sku,
-        uid: verifyToken.recoverUid(req, res),
+        uid: String(uidToQuery),
         storeName: storeName,
       });
 
@@ -44,7 +48,7 @@ const LinkController = {
           image,
           storeName,
           ratingSeller,
-          uid: verifyToken.recoverUid(req, res),
+          uid: String(uidToQuery),
           catalog,
           full,
         });
@@ -62,7 +66,7 @@ const LinkController = {
       }
 
       await Link.findOneAndUpdate(
-        { _id: dataLink._id, uid: verifyToken.recoverUid(req, res) },
+        { _id: dataLink._id, uid: String(uidToQuery) },
         {
           $set: {
             status: status,
@@ -150,7 +154,8 @@ const LinkController = {
 
   async storeList(req, res) {
     const { myPrice, tag } = req.body;
-    const uid = verifyToken.recoverUid(req, res);
+    const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+    const uidToQuery = role === "owner" ? userId : ownerId;
 
     const links = await UtilsController.extractLinks(req.body.link);
     if (!links) {
@@ -160,7 +165,7 @@ const LinkController = {
 
     try {
       for (let i = 0; i < links.length; i++) {
-        await LinkController.processLink(links[i], myPrice, tag, uid);
+        await LinkController.processLink(links[i], myPrice, tag, String(uidToQuery));
       }
     } catch (error) {
       console.error("Erro durante o processamento da lista de links", error);
@@ -172,11 +177,15 @@ const LinkController = {
 
   async index(req, res) {
     const { page, perPage, storeName } = req.query;
+
+    const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+    const uidToQuery = role === "owner" ? userId : ownerId;
+    
     try {
       const links = await Link.aggregate([
         {
           $match: {
-            uid: verifyToken.recoverUid(req, res),
+            uid: String(uidToQuery),
             storeName: storeName,
           },
         },
@@ -206,24 +215,12 @@ const LinkController = {
     }
   },
 
-  // async updateOne(req, res) {
-  //   const { id, myPrice } = req.body;
-
-  //   await Link.findOneAndUpdate(
-  //     { _id: id, uid: verifyToken.recoverUid(req, res) },
-  //     {
-  //       $set: {
-  //         myPrice: myPrice,
-  //       },
-  //     }
-  //   );
-
-  //   return res.status(200).end();
-  // },
 
   // Atualizar/Adicionar um registro preço || tag
   async updateOne(req, res) {
     const { id, myPrice, tags } = req.body;
+    const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+    const uidToQuery = role === "owner" ? userId : ownerId;
 
     const updateFields = {};
 
@@ -243,7 +240,7 @@ const LinkController = {
 
     try {
       await Link.findOneAndUpdate(
-        { _id: id, uid: verifyToken.recoverUid(req, res) },
+        { _id: id, uid: String(uidToQuery) },
         { $set: updateFields },
         { new: true }
       );
@@ -260,18 +257,22 @@ const LinkController = {
   // Remove tag from Link
   async destroyTag(req, res) {
     const { id, tag } = req.params;
+    const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+    const uidToQuery = role === "owner" ? userId : ownerId;
     await Link.updateOne(
-      { _id: id, uid: verifyToken.recoverUid(req, res) },
-      { $pull: { tags: tag } } // Remove a tag exata do array de tags
+      { _id: id, uid: String(uidToQuery) },
+      { $pull: { tags: tag } } 
     );
     res.end();
   },
 
   async getUniqueTags(req, res) {
     try {
-      const uid = verifyToken.recoverUid(req, res);
-
-      const uniqueTags = await Link.distinct("tags", { uid });
+      
+      const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+      const uidToQuery = role === "owner" ? String(userId) : String(ownerId);
+      console.log(uidToQuery)
+      const uniqueTags = await Link.distinct("tags", { uid : uidToQuery });
 
       // Envia a lista de tags como resposta
       return res.status(200).json(uniqueTags);
@@ -372,9 +373,11 @@ const LinkController = {
 
   async update(req, res) {
     const { storeName } = req.params;
+    const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+    const uidToQuery = role === "owner" ? userId : ownerId;
 
     const dataLink = await Link.find({
-      uid: verifyToken.recoverUid(req, res),
+      uid: String(uidToQuery),
       storeName: storeName,
     }).sort({ created_at: -1 });
 
@@ -420,7 +423,7 @@ const LinkController = {
         }
 
         await Link.findOneAndUpdate(
-          { _id: dataLink[i]._id, uid: verifyToken.recoverUid(req, res) },
+          { _id: dataLink[i]._id, uid: String(uidToQuery) },
           {
             $set: {
               nowPrice: asUpdate.nowPrice,
@@ -458,16 +461,20 @@ const LinkController = {
   },
 
   async destroy(req, res) {
+    const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+    const uidToQuery = role === "owner" ? userId : ownerId;
     const { sku } = req.params;
-    await Link.deleteOne({ sku: sku, uid: verifyToken.recoverUid(req, res) });
+    await Link.deleteOne({ sku: sku, uid: String(uidToQuery) });
     res.end();
   },
 
   // Limpeza da tabela toda
   async destroyAll(req, res) {
     const { storeName } = req.params;
+    const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+    const uidToQuery = role === "owner" ? userId : ownerId;
     await Link.deleteMany({
-      uid: verifyToken.recoverUid(req, res),
+      uid: String(uidToQuery),
       storeName: storeName,
     });
     res.end();
@@ -476,8 +483,10 @@ const LinkController = {
   // Limpeza de variações
   async clearRate(req, res) {
     const { storeName } = req.params;
+        const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+    const uidToQuery = role === "owner" ? userId : ownerId;
     Link.updateMany(
-      { uid: verifyToken.recoverUid(req, res), storeName: storeName },
+      { uid: String(uidToQuery), storeName: storeName },
       [{ $set: { lastPrice: "$nowPrice" } }]
     )
       .then((result) => {

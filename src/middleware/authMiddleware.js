@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import 'dotenv/config'
+import User from '../models/User.js';
 
 const verifyJWT = {
  isTokenized(req, res, next){
@@ -36,6 +37,22 @@ recoverUid(req, res){
     const {userId} = decoded;
       return userId
   })
+},
+
+async recoverAuth(req, res) {
+  const token = req.headers['authorization']?.split(" ")?.[1];
+  if (!token) throw new Error("Token ausente");
+
+  const decoded = jwt.verify(token, process.env.SECRET);
+  const user = await User.findById(decoded.userId);
+
+  if (!user) throw new Error("Usuário inválido");
+
+  return {
+    userId: user._id,
+    role: user.role,
+    ownerId: user.ownerId ?? user._id,
+  };
 }
 
 }

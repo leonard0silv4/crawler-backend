@@ -1,8 +1,8 @@
 import "dotenv/config";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
-import Role from "../models/Role.js"; // 👈 Isso é essencial
-import Permission from "../models/Permission.js"; // 👈 Também
+import Role from "../models/Role.js";
+import Permission from "../models/Permission.js";
 import bcrypt from "bcrypt";
 import verifyToken from "../middleware/authMiddleware.js";
 
@@ -11,7 +11,6 @@ export default {
     try {
       const { username, password } = req.body;
 
-      // Popula a roleId com as permissões
       const user = await User.findOne({ username }).populate({
         path: "roleId",
         populate: {
@@ -106,6 +105,123 @@ export default {
       res.status(201).json({ message: "Usuário cadastrado" });
     } catch (error) {
       res.status(500).json({ error });
+    }
+  },
+
+  async index(req, res) {
+    const { skip = 0, limit = 20, search = "" } = req.query;
+
+    const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+    const uidToQuery = role === "owner" ? userId : ownerId;
+
+    const query = {
+      ownerId: uidToQuery,
+      ...(search && {
+        $or: [
+          { username: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      }),
+    };
+
+    const users = await User.find(query)
+      .populate("role", "name")
+      .select("username emailNotify role createdAt roleId")
+      .skip(Number(skip))
+      .limit(Number(limit));
+
+    return res.json(users);
+  },
+
+  async destroy(req, res) {
+    try {
+      const { id } = req.params;
+      await User.findByIdAndDelete(id);
+      return res.status(204).send();
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Erro ao excluir usuário" });
+    }
+  },
+
+  async update(req, res) {
+    try {
+      const { id } = req.params;
+      const { username, email, password, roleId, permissions } = req.body;
+
+      const updateData = {};
+
+      if (username) updateData.username = username;
+      if (email) updateData.email = email;
+      if (roleId) updateData.roleId = roleId;
+      if (permissions) updateData.permissions = permissions;
+
+      if (password) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        updateData.password = hashedPassword;
+      }
+
+      if (roleId) {
+        const role = await Role.findById(roleId);
+        if (role?.name === "faccionista") {
+          updateData.role = "faccionista";
+        } else if (role?.name) {
+          updateData.role = role.name;
+        }
+      }
+
+      const user = await User.findByIdAndUpdate(id, updateData, { new: true });
+      return res.json(user);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Erro ao atualizar usuário" });
+    }
+  },
+
+  async store(req, res) {
+    try {
+      const { username, email, password, roleId, ...rest } = req.body;
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+      const uidToQuery = role === "owner" ? String(userId) : String(ownerId);
+
+      let roleFromBase;
+      if (roleId) {
+        roleFromBase = await Role.findById(roleId);
+        if (!roleFromBase) {
+          return res.status(400).json({ error: "Role não encontrada" });
+        }
+      }
+
+      const user = new User({
+        username,
+        emailNotify: email,
+        password: hashedPassword,
+        roleId,
+        ownerId: uidToQuery,
+        role: roleFromBase?.name,
+        ...rest,
+      });
+
+      await user.save();
+
+      return res.status(201).json(user);
+    } catch (err) {
+      if (err.code === 11000) {
+        const duplicatedField = Object.keys(err.keyValue || {})[0];
+        let message = "Campo duplicado.";
+
+        
+        if (duplicatedField === "username") {
+          
+          message = "Nome de usuário já está em uso.";
+          return res.status(500).json({ error: message });
+        }
+      }
+
+      console.error("Erro ao criar usuário:", err);
+      return res.status(500).json({ error: "Erro ao criar usuário" });
     }
   },
 };

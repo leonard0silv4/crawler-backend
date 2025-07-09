@@ -7,7 +7,7 @@ const jobSchema = new mongoose.Schema({
     larg: { type: Number, required: true },
     compr: { type: Number, required: true },
     emenda: { type: Boolean, default: false},
-    totMetros: { type: Number, required: true }, // Total de metros
+    totMetros: { type: Number, required: true }, 
     orcamento: { type: Number, required: true },
     recebidoConferido: { type: Boolean, default: false },
     dataRecebidoConferido: { type: Date },
@@ -25,8 +25,8 @@ const jobSchema = new mongoose.Schema({
     rateLote: { type: Number },
     advancedMoneyPayment : { type: Number },
     isArchived: { type: Boolean, default: false },
-    faccionistaId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Relaciona a costura ao faccionista
-    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Relaciona a costura ao owner
+    faccionistaId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, 
   }, { timestamps: true });
 
 
