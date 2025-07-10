@@ -1,5 +1,6 @@
 import express from 'express';
 
+import BackupController from './controllers/BackupController.js'
 import LinkController from './controllers/mercadolivre_shopee/LinkController.js'
 import UserController from './controllers/UserController.js';
 import MailController from './controllers/MailController.js';
@@ -106,6 +107,9 @@ routes.post('/callback/api/hook',  async(req, res) => {
 
 // Routas Nf xml
 routes.post('/xml', NfController.index);
+
+// backup
+routes.get("/backup", BackupController.backup);
 
 
 
