@@ -106,7 +106,12 @@ routes.post('/callback/api/hook',  async(req, res) => {
 });
 
 // Routas Nf xml
-routes.post('/xml', NfController.index);
+routes.post('/nfe/parse', NfController.process);
+routes.post("/nfe",verifyJWT.isTokenized, NfController.store); 
+routes.get("/nfe",verifyJWT.isTokenized, NfController.index);
+routes.get("/nfe/:id",verifyJWT.isTokenized, NfController.show);
+routes.put("/nfe/:id",verifyJWT.isTokenized, NfController.update);
+routes.delete("/nfe/:id",verifyJWT.isTokenized, NfController.destroy);
 
 // backup
 routes.get("/backup", BackupController.backup);

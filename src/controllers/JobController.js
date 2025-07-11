@@ -440,9 +440,9 @@ const JobController = {
               jobId: job._id,
               userId,
               action: "update",
-              field: "advancedMoneyPayment",
-              oldValue,
-              newValue: value,
+              field: "pago",
+              oldValue : true ,
+              newValue: false,
               req,
               res
             });
