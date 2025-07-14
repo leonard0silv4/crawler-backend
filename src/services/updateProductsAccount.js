@@ -2,6 +2,8 @@ import axios from "axios";
 import Bottleneck from "bottleneck";
 import MeliProduct from "../models/Meli_products.js";
 import { renewToken } from "../utils/meliService.js";
+import { subDays, startOfDay } from "date-fns";
+
 
 // Limite de 5 requisições por segundo
 const limiter = new Bottleneck({
@@ -115,7 +117,7 @@ for (const tipo of tipos) {
         const item = itemWrap.body;
         if (!item ) continue;
 
-        const hoje = new Date();
+        const ontem = startOfDay(subDays(new Date(), 1));
         const image = item.pictures?.[0]?.url || "";
         const SKU = item.seller_custom_field || "";
 
@@ -130,14 +132,14 @@ for (const tipo of tipos) {
             item.sold_quantity - (ultimo.sellQtyAcumulado || 0);
 
           novoRegistro = {
-            day: hoje,
+            day: ontem,
             sellQty: Math.max(0, sellQtyDia),
             sellQtyAcumulado: item.sold_quantity,
             shippingCost,
           };
         } else {
           novoRegistro = {
-            day: hoje,
+            day: ontem,
             sellQty: 0,
             sellQtyAcumulado: item.sold_quantity,
             shippingCost,

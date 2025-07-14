@@ -44,4 +44,14 @@ export default {
       return res.status(500).json({ error: "Erro ao deletar role" });
     }
   },
+  async updatePermissions(req, res) {
+    const { id } = req.params;
+    const { permissions } = req.body;
+
+    await Role.findByIdAndUpdate(id, {
+      permissions,
+    });
+
+    res.json({ success: true });
+  },
 };

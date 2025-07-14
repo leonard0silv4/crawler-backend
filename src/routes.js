@@ -12,6 +12,7 @@ import CronController from './controllers/CronController.js';
 import LogController from './controllers/LogController.js';
 import RoleController from './controllers/RoleController.js';
 import PermissionController from './controllers/PermissionController.js';
+import DashboardController from './controllers/DashboardController.js';
 
 import verifyJWT from './middleware/authMiddleware.js'
 import NfController from './controllers/NfController.js';
@@ -56,14 +57,18 @@ routes.put('/users/:id', verifyJWT.isTokenized, UserController.update);
 routes.delete('/users/:id', verifyJWT.isTokenized, UserController.destroy);
 
 // Roles
-routes.get("/roles", RoleController.index);
-routes.get("/roles/:id", RoleController.show);
-routes.post("/roles", RoleController.store);
-routes.delete("/roles/:id", RoleController.delete);
+routes.get("/roles", verifyJWT.isTokenized, RoleController.index);
+routes.get("/roles/:id", verifyJWT.isTokenized, RoleController.show);
+routes.post("/roles", verifyJWT.isTokenized, RoleController.store);
+routes.delete("/roles/:id", verifyJWT.isTokenized, RoleController.delete);
+routes.put("/roles/:id/permissions", verifyJWT.isTokenized, RoleController.updatePermissions);
+
+// Dashboard
+routes.get("/dashboard/summary", verifyJWT.isTokenized, DashboardController.summary);
 
 
 // Permissions
-routes.get("/permissions", PermissionController.index);
+routes.get("/permissions", verifyJWT.isTokenized, PermissionController.index);
 
 
 // Rotas faccionista
@@ -87,6 +92,7 @@ routes.put("/jobs/splitAdvancedMoney", verifyJWT.isTokenized, JobController.upda
 
 // Rota pdf
 routes.post("/report/pdf", verifyJWT.isTokenized, PdfController.index);
+routes.post("/nfe/pdf", verifyJWT.isTokenized, PdfController.generatePdfNf);
 
 // Logs
 routes.get("/logs", verifyJWT.isTokenized,  LogController.index); 
@@ -105,8 +111,11 @@ routes.post('/callback/api/hook',  async(req, res) => {
     })    
 });
 
+routes.get("/jobs/archive", CronController.archiveJobs);
+
+
 // Routas Nf xml
-routes.post('/nfe/parse', NfController.process);
+routes.post('/nfe/parse',verifyJWT.isTokenized, NfController.process);
 routes.post("/nfe",verifyJWT.isTokenized, NfController.store); 
 routes.get("/nfe",verifyJWT.isTokenized, NfController.index);
 routes.get("/nfe/:id",verifyJWT.isTokenized, NfController.show);

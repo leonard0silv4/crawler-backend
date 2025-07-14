@@ -2,6 +2,7 @@ import cron from "node-cron";
 
 import UserController from "./UserController.js";
 import Conta from "../models/Conta.js";
+import Job from "../models/Job.js";
 
 import LinkController from "./mercadolivre_shopee/LinkController.js";
 import { updateProductsAccount } from "../services/updateProductsAccount.js";
@@ -71,4 +72,25 @@ export default {
       await updateProductsAccount(conta);
     }
   },
+  async archiveJobs(req, res) {
+  try {
+    const fourMonthsAgo = new Date();
+    fourMonthsAgo.setMonth(fourMonthsAgo.getMonth() - 4);
+
+    const result = await Job.updateMany(
+      {
+        pago: true,
+        createdAt: { $lte: fourMonthsAgo },
+        isArchived: { $ne: true },
+      },
+      {
+        $set: { isArchived: true },
+      }
+    );
+
+    return res.json({ archived: result.modifiedCount });
+  } catch (err) {
+    return res.status(500).json({ error: "Erro ao arquivar trabalhos." });
+  }
+}
 };

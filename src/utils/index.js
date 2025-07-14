@@ -2,7 +2,6 @@ import superagent from "superagent";
 import * as cheerio from "cheerio";
 
 import Link from "../models/Link.js";
-import Job from "../models/Job.js";
 
 export default {
   async updateMyPriceFromCatalog(catalogUrl) {

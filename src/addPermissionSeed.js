@@ -13,15 +13,15 @@ async function addNewPermission() {
     );
     console.log("🟢 Conectado ao MongoDB");
 
-    const existing = await Permission.findOne({ name: "control_users" });
+    const existing = await Permission.findOne({ name: "add_nf" });
     if (existing) {
       console.log("⚠️ Permissão 'control_users' já existe.");
       process.exit(0);
     }
 
     const permission = await Permission.create({
-      name: "control_users",
-      description: "Gerenciar usuários",
+      name: "add_nf",
+      description: "Adicionar nota fiscal",
     });
 
     console.log("✅ Permissão criada:", permission);

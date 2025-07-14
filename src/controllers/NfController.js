@@ -3,7 +3,6 @@ import { parseStringPromise } from "xml2js";
 import NfeEntry from "../models/Nf.js";
 import verifyToken from "../middleware/authMiddleware.js";
 
-
 const upload = multer({ storage: multer.memoryStorage() });
 
 export default {
@@ -37,7 +36,6 @@ export default {
     try {
       const { search, startDate, endDate, cursor, limit = 20 } = req.query;
       const { role, userId, ownerId } = await verifyToken.recoverAuth(req, res);
-      
 
       const uidToQuery = role === "owner" ? userId : ownerId;
       const query = { ownerId: uidToQuery };
@@ -45,8 +43,10 @@ export default {
       if (search) {
         query.$or = [
           { "fornecedor.nome": { $regex: search, $options: "i" } },
+          { "fornecedor.cnpj": { $regex: search, $options: "i" } },
           { "produtos.name": { $regex: search, $options: "i" } },
           { "produtos.sku": { $regex: search, $options: "i" } },
+          { "numeroNota": { $regex: search, $options: "i" } },
         ];
       }
 
@@ -57,15 +57,15 @@ export default {
         };
       }
 
-  if (cursor && cursor !== "0") {
-  const parsedCursor = new Date(cursor);
-  if (!isNaN(parsedCursor.getTime())) {
-    query.createdAt = { $lt: parsedCursor };
-  }
-}
+      if (cursor && cursor !== "0") {
+        const parsedCursor = new Date(cursor);
+        if (!isNaN(parsedCursor.getTime())) {
+          query.createdAt = { $lt: parsedCursor };
+        }
+      }
 
       const notas = await NfeEntry.find(query)
-        .sort({ createdAt: -1 })
+        .sort({ dataEmissao: -1 })
         .limit(Number(limit) + 1);
 
       const hasNextPage = notas.length > limit;
@@ -85,17 +85,61 @@ export default {
   },
   async store(req, res) {
     try {
-      const { fornecedor, numeroNota, dataEmissao, valores, produtos, manual } =
-        req.body;
-      const { userId, ownerId } = await verifyToken.recoverAuth(req, res);
-      
-      const nota = await NfeEntry.create({
+      const {
         fornecedor,
         numeroNota,
-        dataEmissao,
+        dataEmissao = new Date(localDate.getTime()).toISOString(),
         valores,
         produtos,
         manual,
+        accessKey,
+        observations,
+      } = req.body;
+      const { userId, ownerId } = await verifyToken.recoverAuth(req, res);
+
+      const observation_history = [];
+
+      for (const produto of produtos) {
+        const { code, unitValue } = produto;
+
+        const ultimaNota = await NfeEntry.findOne({
+          "produtos.code": code,
+          ownerId,
+        })
+          .sort({ createdAt: -1 })
+          .lean();
+
+        if (ultimaNota) {
+          const produtoAnterior = ultimaNota.produtos.find(
+            (p) => p.code === code
+          );
+
+          if (produtoAnterior && produtoAnterior.unitValue !== unitValue) {
+            observation_history.push({
+              code,
+              unitValueAnterior: produtoAnterior.unitValue,
+              unitValueAtual: unitValue,
+              diferenca: parseFloat(
+                (unitValue - produtoAnterior.unitValue).toFixed(2)
+              ),
+              numeroNotaAnterior: ultimaNota.numeroNota,
+              fornecedorAnterior: ultimaNota.fornecedor.nome || '',
+              dataNotaAnterior: ultimaNota.dataEmissao,
+            });
+          }
+        }
+      }
+
+      const nota = await NfeEntry.create({
+        fornecedor,
+        numeroNota,
+        accessKey,
+        dataEmissao,
+        valores,
+        observation_history,
+        produtos,
+        manual,
+        observations,
         criadoPor: userId,
         ownerId,
       });

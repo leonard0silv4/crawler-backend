@@ -39,7 +39,7 @@ const LinkController = {
           status,
           seller,
           dateMl,
-          ...tag.length ? {
+          ...tag?.length ? {
             tags: [tag],
           } : {},          
           myPrice: Number(myPrice),

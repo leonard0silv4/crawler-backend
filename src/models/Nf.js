@@ -20,7 +20,20 @@ const NfeEntrySchema = new mongoose.Schema(
       telefone: String,
     },
     numeroNota: String,
+    accessKey: String,
+    observations: String,
     dataEmissao: Date,
+    observation_history: [
+      {
+        code: String,
+        unitValueAnterior: Number,
+        unitValueAtual: Number,
+        diferenca: Number,
+        numeroNotaAnterior: String,
+        fornecedorAnterior: String,
+        dataNotaAnterior: Date,
+      },
+    ],
     valores: {
       vProd: Number,
       vFrete: Number,
