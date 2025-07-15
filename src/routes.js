@@ -57,7 +57,7 @@ routes.put('/users/:id', verifyJWT.isTokenized, UserController.update);
 routes.delete('/users/:id', verifyJWT.isTokenized, UserController.destroy);
 
 // Roles
-routes.get("/roles", verifyJWT.isTokenized, RoleController.index);
+routes.get("/roles",  RoleController.index);
 routes.get("/roles/:id", verifyJWT.isTokenized, RoleController.show);
 routes.post("/roles", verifyJWT.isTokenized, RoleController.store);
 routes.delete("/roles/:id", verifyJWT.isTokenized, RoleController.delete);

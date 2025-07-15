@@ -6,6 +6,9 @@ import Role from "./models/Role.js";
 
 dotenv.config({ path: "../.env" });
 
+const permissionName = 'add_nf'
+const permissionDescription = 'Adicionar nota fiscal'
+
 async function addNewPermission() {
   try {
     await mongoose.connect(
@@ -13,15 +16,15 @@ async function addNewPermission() {
     );
     console.log("🟢 Conectado ao MongoDB");
 
-    const existing = await Permission.findOne({ name: "add_nf" });
+    const existing = await Permission.findOne({ name: permissionName });
     if (existing) {
-      console.log("⚠️ Permissão 'control_users' já existe.");
+      console.log(`⚠️ Permissão ${permissionName} já existe.`);
       process.exit(0);
     }
 
     const permission = await Permission.create({
-      name: "add_nf",
-      description: "Adicionar nota fiscal",
+      name: permissionName,
+      description: permissionDescription,
     });
 
     console.log("✅ Permissão criada:", permission);
