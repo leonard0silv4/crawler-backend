@@ -44,6 +44,7 @@ export default {
         query.$or = [
           { "fornecedor.nome": { $regex: search, $options: "i" } },
           { "fornecedor.cnpj": { $regex: search, $options: "i" } },
+          { "fornecedor.endereco": { $regex: search, $options: "i" } },
           { "produtos.name": { $regex: search, $options: "i" } },
           { "produtos.sku": { $regex: search, $options: "i" } },
           { numeroNota: { $regex: search, $options: "i" } },
@@ -84,6 +85,8 @@ export default {
     }
   },
   async store(req, res) {
+    const localDate = new Date();
+
     try {
       const {
         fornecedor,
@@ -103,7 +106,7 @@ export default {
       if (notaExistente) {
         return res
           .status(400)
-          .json({ error: "Nota fiscal com este número já existe." });
+          .json({ error: "Nota fiscal vazio." });
       }
 
       // Buscar e processar observações de produtos com histórico

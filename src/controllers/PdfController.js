@@ -132,14 +132,14 @@ export default {
       res.status(500).json({ error: "Erro ao gerar relatório" });
     }
   },
- async generatePdfNf(req, res) {
-  try {
+  async generatePdfNf(req, res) {
+     try {
     const { id } = req.body;
-
     const invoice = await NfeEntry.findById(id);
 
-    if (!invoice)
+    if (!invoice) {
       return res.status(404).json({ error: "Nota não encontrada" });
+    }
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
@@ -157,7 +157,7 @@ export default {
       .text(`Nota Fiscal nº ${invoice.numeroNota}`, { align: "center" });
     doc.moveDown();
 
-    // Dados do fornecedor
+    // Fornecedor
     doc
       .fontSize(12)
       .font("Helvetica")
@@ -173,66 +173,94 @@ export default {
       );
     doc.moveDown();
 
-    // Cabeçalho da tabela
+    // Verificar se é novo layout
+    const isNovoModelo =
+      invoice.produtos?.[0]?.box !== undefined &&
+      invoice.produtos?.[0]?.boxValue !== undefined &&
+      invoice.produtos?.[0]?.qtdBox !== undefined;
+
+    // Cabeçalho
     const tableTop = doc.y;
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(10)
-      .text("Nº", 40, tableTop, { width: 30 })
-      .text("Produto", 75, tableTop, { width: 180 })
-      .text("SKU", 260, tableTop, { width: 60 })
-      .text("Qtd", 325, tableTop, { width: 40, align: "right" })
-      .text("Unitário", 370, tableTop, { width: 70, align: "right" })
-      .text("Total", 445, tableTop, { width: 80, align: "right" });
+    doc.font("Helvetica-Bold").fontSize(10).text("Nº", 40, tableTop, { width: 30 })
+      .text("Produto", 75, tableTop, { width: 150 })
+      .text("SKU", 225, tableTop, { width: 50 });
+
+    if (isNovoModelo) {
+      doc
+        .text("Caixas", 280, tableTop, { width: 40, align: "right" })
+        .text("Qtd/Caixa", 325, tableTop, { width: 50, align: "right" })
+        .text("Valor/Caixa", 380, tableTop, { width: 60, align: "right" })
+        .text("Total", 445, tableTop, { width: 80, align: "right" });
+    } else {
+      doc
+        .text("Qtd", 280, tableTop, { width: 40, align: "right" })
+        .text("Unitário", 325, tableTop, { width: 70, align: "right" })
+        .text("Total", 400, tableTop, { width: 80, align: "right" });
+    }
 
     doc.moveDown(1);
 
     // Produtos
     invoice.produtos.forEach((produto, idx) => {
       const y = doc.y;
-      const total = produto.quantity * produto.unitValue;
 
-      doc
-        .font("Helvetica")
-        .fontSize(9)
-        .text(`${idx + 1}`, 40, y, { width: 30 })
-        .text(produto.name.substring(0, 30), 75, y, {
-          width: 180,
-          align: "left",
-          lineBreak: true,
-        })
-        .text(produto.code, 260, y, { width: 60 })
-        .text(produto.quantity.toString(), 325, y, {
-          width: 40,
-          align: "right",
-        })
-        .text(`R$ ${produto.unitValue.toFixed(2)}`, 370, y, {
-          width: 70,
-          align: "right",
-        })
-        .text(`R$ ${total.toFixed(2)}`, 445, y, {
-          width: 80,
-          align: "right",
-        });
+      if (
+        produto.box !== undefined &&
+        produto.boxValue !== undefined &&
+        produto.qtdBox !== undefined
+      ) {
+        const box = produto.box ?? 0;
+        const boxValue = produto.boxValue ?? 0;
+        const qtdBox = produto.qtdBox ?? 0;
+        const total = produto.totalValue ?? box * boxValue;
+
+        doc
+          .font("Helvetica")
+          .fontSize(9)
+          .text(`${idx + 1}`, 40, y, { width: 30 })
+          .text(produto.name.substring(0, 30), 75, y, { width: 150 })
+          .text(produto.code, 225, y, { width: 50 })
+          .text(box.toString(), 280, y, { width: 40, align: "right" })
+          .text(qtdBox.toString(), 325, y, { width: 50, align: "right" })
+          .text(`R$ ${boxValue.toFixed(2)}`, 380, y, {
+            width: 60,
+            align: "right",
+          })
+          .text(`R$ ${total.toFixed(2)}`, 445, y, { width: 80, align: "right" });
+      } else {
+        const quantity = produto.quantity ?? 0;
+        const unitValue = produto.unitValue ?? 0;
+        const total = produto.totalValue ?? quantity * unitValue;
+
+        doc
+          .font("Helvetica")
+          .fontSize(9)
+          .text(`${idx + 1}`, 40, y, { width: 30 })
+          .text(produto.name.substring(0, 30), 75, y, { width: 150 })
+          .text(produto.code, 225, y, { width: 50 })
+          .text(quantity.toString(), 280, y, { width: 40, align: "right" })
+          .text(`R$ ${unitValue.toFixed(2)}`, 325, y, {
+            width: 70,
+            align: "right",
+          })
+          .text(`R$ ${total.toFixed(2)}`, 400, y, { width: 80, align: "right" });
+      }
 
       doc.moveDown(0.5);
-
-      // Adiciona nova página se necessário
       if (doc.y > 720) doc.addPage();
     });
 
     doc.moveDown(1.5);
 
-    // Rodapé com totais
-    const yTotal = doc.y;
+    // Totais
     const labelX = 40;
     const valueX = 250;
 
     doc
       .font("Helvetica")
       .fontSize(10)
-      .text("Valor dos Produtos:", labelX, yTotal)
-      .text(`R$ ${invoice.valores.vProd.toFixed(2)}`, valueX, yTotal, {
+      .text("Valor dos Produtos:", labelX, doc.y)
+      .text(`R$ ${invoice.valores.vProd.toFixed(2)}`, valueX, doc.y, {
         align: "right",
       });
 
@@ -278,6 +306,5 @@ export default {
     console.error(err);
     res.status(500).json({ error: "Erro ao gerar PDF da nota fiscal" });
   }
-}
-
+  },
 };

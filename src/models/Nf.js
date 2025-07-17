@@ -10,6 +10,9 @@ const ProdutoSchema = new mongoose.Schema({
   icmsValue: Number,
   ipiValue: Number,
   totalValue: Number,
+  box : Number,
+  boxValue: Number,
+  qtdBox: Number,
 });
 
 const NfeEntrySchema = new mongoose.Schema(
@@ -18,6 +21,7 @@ const NfeEntrySchema = new mongoose.Schema(
       nome: String,
       cnpj: String,
       telefone: String,
+      endereco: String
     },
     numeroNota: String,
     accessKey: String,
