@@ -46,7 +46,7 @@ export default {
           { "fornecedor.cnpj": { $regex: search, $options: "i" } },
           { "produtos.name": { $regex: search, $options: "i" } },
           { "produtos.sku": { $regex: search, $options: "i" } },
-          { "numeroNota": { $regex: search, $options: "i" } },
+          { numeroNota: { $regex: search, $options: "i" } },
         ];
       }
 
@@ -95,27 +95,35 @@ export default {
         accessKey,
         observations,
       } = req.body;
+
       const { userId, ownerId } = await verifyToken.recoverAuth(req, res);
 
+      // Impedir duplicidade de número de nota
+      const notaExistente = await NfeEntry.findOne({ numeroNota, ownerId });
+      if (notaExistente) {
+        return res
+          .status(400)
+          .json({ error: "Nota fiscal com este número já existe." });
+      }
+
+      // Buscar e processar observações de produtos com histórico
       const observation_history = [];
 
-      for (const produto of produtos) {
-        const { code, unitValue } = produto;
+      await Promise.all(
+        produtos.map(async (produto) => {
+          const { code, unitValue } = produto;
 
-        const ultimaNota = await NfeEntry.findOne({
-          "produtos.code": code,
-          ownerId,
-        })
-          .sort({ createdAt: -1 })
-          .lean();
+          const ultimaNota = await NfeEntry.findOne({
+            "produtos.code": code,
+            ownerId,
+          }).sort({ createdAt: -1 });
 
-        if (ultimaNota) {
-          const produtoAnterior = ultimaNota.produtos.find(
+          const produtoAnterior = ultimaNota?.produtos.find(
             (p) => p.code === code
           );
 
           if (produtoAnterior && produtoAnterior.unitValue !== unitValue) {
-            observation_history.push({
+            const entry = {
               code,
               unitValueAnterior: produtoAnterior.unitValue,
               unitValueAtual: unitValue,
@@ -123,23 +131,32 @@ export default {
                 (unitValue - produtoAnterior.unitValue).toFixed(2)
               ),
               numeroNotaAnterior: ultimaNota.numeroNota,
-              fornecedorAnterior: ultimaNota.fornecedor.nome || '',
+              fornecedorAnterior: ultimaNota.fornecedor?.nome || "",
               dataNotaAnterior: ultimaNota.dataEmissao,
-            });
-          }
-        }
-      }
+            };
 
+            observation_history.push(entry);
+
+            // Atualização retroativa
+            await NfeEntry.updateOne(
+              { _id: ultimaNota._id },
+              { $push: { observation_history: entry } }
+            );
+          }
+        })
+      );
+
+      // Criar nova nota fiscal
       const nota = await NfeEntry.create({
         fornecedor,
         numeroNota,
         accessKey,
         dataEmissao,
         valores,
-        observation_history,
         produtos,
         manual,
         observations,
+        observation_history,
         criadoPor: userId,
         ownerId,
       });
@@ -150,6 +167,7 @@ export default {
       return res.status(500).json({ error: "Erro ao salvar nota fiscal" });
     }
   },
+
   async show(req, res) {
     const { id } = req.params;
     const nota = await NfeEntry.findById(id);
