@@ -13,6 +13,8 @@ import LogController from './controllers/LogController.js';
 import RoleController from './controllers/RoleController.js';
 import PermissionController from './controllers/PermissionController.js';
 import DashboardController from './controllers/DashboardController.js';
+import OrdersController from "./controllers/OrderController.js";
+
 
 import verifyJWT from './middleware/authMiddleware.js'
 import NfController from './controllers/NfController.js';
@@ -125,7 +127,13 @@ routes.delete("/nfe/:id",verifyJWT.isTokenized, NfController.destroy);
 // backup
 routes.get("/backup", BackupController.backup);
 
+// BaserLink orders
 
+routes.get(
+  "/orders/summary",
+  // verifyJWT.isTokenized,
+  OrdersController.summary
+);
 
 routes.get("/events", (req, res) => {
     
