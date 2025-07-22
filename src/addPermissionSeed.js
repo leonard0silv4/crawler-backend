@@ -6,8 +6,8 @@ import Role from "./models/Role.js";
 
 dotenv.config({ path: "../.env" });
 
-const permissionName = 'add_nf'
-const permissionDescription = 'Adicionar nota fiscal'
+const permissionName = 'view_sales'
+const permissionDescription = 'Ver dados de pedidos'
 
 async function addNewPermission() {
   try {

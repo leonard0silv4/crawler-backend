@@ -13,7 +13,7 @@ import LogController from './controllers/LogController.js';
 import RoleController from './controllers/RoleController.js';
 import PermissionController from './controllers/PermissionController.js';
 import DashboardController from './controllers/DashboardController.js';
-import OrdersController from "./controllers/OrderController.js";
+import OrdersController, {clearSummaryCache} from "./controllers/OrderController.js";
 
 
 import verifyJWT from './middleware/authMiddleware.js'
@@ -134,6 +134,11 @@ routes.get(
   // verifyJWT.isTokenized,
   OrdersController.summary
 );
+
+routes.post("/orders/summary/clear-cache", (req, res) => {
+  clearSummaryCache();
+  return res.json({ ok: true, message: "Cache limpo com sucesso." });
+});
 
 routes.get("/events", (req, res) => {
     
