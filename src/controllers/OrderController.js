@@ -1,5 +1,6 @@
 import axios from "axios";
 import { parseISO, isSameDay } from "date-fns";
+import BaseLinkerMonthlySummary from "../models/BaseLinkerMonthlySummary.js";
 
 const BASELINKER_API_URL = "https://api.baselinker.com/connector.php";
 const TOKEN = process.env.BASER_LINK_TOKEN;
@@ -21,7 +22,30 @@ export function clearSummaryCache() {
 }
 
 export default {
-    
+  async lastMonth(req, res)  {
+      try {
+        const { month } = req.query;
+
+        if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+          return res.status(400).json({ error: "Parâmetro 'month' deve estar no formato YYYY-MM" });
+        }
+
+        const result = await BaseLinkerMonthlySummary.findOne({ month });
+
+        if (!result) {
+          return res.status(404).json({ error: "Resumo não encontrado para o mês solicitado." });
+        }
+
+        res.json({
+          summary: result.summary,
+          hourlySales: result.hourlySales,
+        });
+      } catch (err) {
+        console.error("Erro ao buscar resumo mensal:", err);
+        res.status(500).json({ error: "Erro ao buscar resumo mensal." });
+      }
+
+  },
   async summary(req, res) {
     try {
       const { day } = req.query;

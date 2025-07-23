@@ -14,6 +14,8 @@ import RoleController from './controllers/RoleController.js';
 import PermissionController from './controllers/PermissionController.js';
 import DashboardController from './controllers/DashboardController.js';
 import OrdersController, {clearSummaryCache} from "./controllers/OrderController.js";
+import { fetchAndStoreMonthlySummary } from "./services/fetchMonthlyBaseLinker.js";
+
 
 
 import verifyJWT from './middleware/authMiddleware.js'
@@ -134,10 +136,33 @@ routes.get(
   // verifyJWT.isTokenized,
   OrdersController.summary
 );
-
 routes.post("/orders/summary/clear-cache", (req, res) => {
   clearSummaryCache();
   return res.json({ ok: true, message: "Cache limpo com sucesso." });
+});
+
+routes.get(
+  "/orders/monthly-summary",
+  // verifyJWT.isTokenized,
+  OrdersController.lastMonth
+);
+
+
+routes.post("/run-baselinker-monthly-summary", async (req, res) => {
+  try {
+    const { year, month } = req.body;
+
+    if (!year || !month) {
+      return res.status(400).json({ error: "Parâmetros 'year' e 'month' são obrigatórios" });
+    }
+
+    await fetchAndStoreMonthlySummary(Number(year), Number(month));
+
+    res.json({ success: true, message: `Resumo de ${year}-${month} gerado com sucesso.` });
+  } catch (err) {
+    console.error("Erro ao rodar resumo manual:", err);
+    res.status(500).json({ error: "Erro ao rodar o resumo mensal manualmente." });
+  }
 });
 
 routes.get("/events", (req, res) => {

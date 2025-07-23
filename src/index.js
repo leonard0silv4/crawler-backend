@@ -7,6 +7,8 @@ import routes from "./routes.js";
 import cron from "node-cron";
 import http from "http";
 import CronController from "./controllers/CronController.js";
+import { fetchAndStoreMonthlySummary } from "./services/fetchMonthlyBaseLinker.js";
+
 
 dotenv.config({ path: "../.env" });
 
@@ -36,6 +38,16 @@ cron.schedule("*/30 * * * *", () => {
  cron.schedule("0 2 * * *", async () => {
   console.log("🔁 Executando rotina diária de coleta de produtos...");
   await CronController.cronUserMeli();
+});
+
+cron.schedule("0 6 1 * *", async () => {
+  const now = new Date();
+  const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const year = previousMonth.getFullYear();
+  const month = previousMonth.getMonth() + 1;
+
+  console.log(`[CRON] Iniciando fetch do mês ${year}-${month}`);
+  await fetchAndStoreMonthlySummary(year, month);
 });
 
 // Middlewares
