@@ -4,7 +4,6 @@ import verifyToken from "../middleware/authMiddleware.js";
 import Product from "../models/Product.js";
 import { emitSSE } from "../utils/emitSSE.js";
 
-
 const upload = multer({ storage: multer.memoryStorage() });
 
 export default {
@@ -123,99 +122,91 @@ export default {
       return res.status(500).json({ error: "Erro ao deletar produtos" });
     }
   },
-async importFromXLS(req, res) {
-  const { userId, ownerId } = await verifyToken.recoverAuth(req, res);
+  async importFromXLS(req, res) {
+    const { userId, ownerId } = await verifyToken.recoverAuth(req, res);
 
-  upload.single("file")(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ error: "Erro no upload do arquivo." });
-    }
+    upload.single("file")(req, res, async (err) => {
+      if (err) {
+        return res.status(400).json({ error: "Erro no upload do arquivo." });
+      }
 
-    try {
-      const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const data = xlsx.utils.sheet_to_json(sheet);
+      try {
+        const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const data = xlsx.utils.sheet_to_json(sheet);
 
-      const total = data.length;
-      let ignoradosPorDuplicado = 0;
-      
-      const produtosImportados = [];
+        const total = data.length;
+        let ignoradosPorDuplicado = 0;
+        let processed = 0;
 
-      const allSkus = data
-        .map((row) => row["Código (SKU)"]?.trim())
-        .filter((sku) => !!sku);
+        const allSkus = data
+          .map((row) => row["Código (SKU)"]?.trim())
+          .filter((sku) => !!sku);
 
-      
-      const existingProducts = await Product.find({
-        sku: { $in: allSkus },
-      }).select("sku");
+        const existingProducts = await Product.find({
+          sku: { $in: allSkus },
+        }).select("sku");
 
-      const existingSkusSet = new Set(existingProducts.map((p) => p.sku));
+        const existingSkusSet = new Set(existingProducts.map((p) => p.sku));
+        const produtosParaInserir = [];
 
-      
-      let processed = 0;
+        for (const row of data) {
+          const nome = row["Descrição"]?.trim();
+          const sku = row["Código (SKU)"]?.trim();
 
-      for (const row of data) {
-        const nome = row["Descrição"]?.trim();
-        const sku = row["Código (SKU)"]?.trim();
+          if (!nome || !sku || existingSkusSet.has(sku)) {
+            ignoradosPorDuplicado++;
+          } else {
+            produtosParaInserir.push({
+              nome,
+              sku,
+              descricao: row["Descrição complementar"] || "",
+              preco: Number(row["Preço"] || 0),
+              criadoPor: userId,
+              ownerId,
+            });
+          }
 
-        if (!nome || !sku || existingSkusSet.has(sku)) {
-          ignoradosPorDuplicado++;
           processed++;
           emitSSE("importProgress", {
             processed,
             total,
             percent: Math.round((processed / total) * 100),
           });
-          continue;
         }
 
-        const produto = {
-          nome,
-          sku,
-          descricao: row["Descrição complementar"] || "",
-          preco: Number(row["Preço"] || 0),
-          criadoPor: userId,
-          ownerId,
-        };
+        const produtosImportados = await Product.insertMany(
+          produtosParaInserir,
+          {
+            ordered: false, 
+          }
+        );
 
-        const novo = await Product.create(produto);
-        produtosImportados.push(novo);
-
-        processed++;
-        emitSSE("importProgress", {
-          processed,
-          total,
-          percent: Math.round((processed / total) * 100),
+        console.log({
+          totalLido: total,
+          produtosImportados: produtosImportados.length,
+          ignoradosPorDuplicado,
         });
+
+        emitSSE("importFinished", {
+          total,
+          imported: produtosImportados.length,
+        });
+
+        return res.status(201).json({
+          message: "Importação concluída",
+          produtos: produtosImportados,
+        });
+      } catch (error) {
+        console.error("Erro na importação:", error);
+
+        emitSSE("importError", {
+          message: "Erro ao importar produtos",
+        });
+
+        return res.status(500).json({ error: "Erro ao importar produtos." });
       }
-
-      console.log({
-        totalLido: total,
-        produtosImportados: produtosImportados.length,
-        ignoradosPorDuplicado,
-      });
-
-      emitSSE("importFinished", {
-        total,
-        imported: produtosImportados.length,
-      });
-
-      return res.status(201).json({
-        message: "Importação concluída",
-        produtos: produtosImportados,
-      });
-    } catch (error) {
-      console.error("Erro na importação:", error);
-
-      emitSSE("importError", {
-        message: "Erro ao importar produtos",
-      });
-
-      return res.status(500).json({ error: "Erro ao importar produtos." });
-    }
-  });
-}
-
+    });
+  },
 };
