@@ -216,7 +216,7 @@ const LinkController = {
   },
 
 
-  // Atualizar/Adicionar um registro preço || tag
+  
   async updateOne(req, res) {
     const { id, myPrice, tags } = req.body;
     const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
@@ -254,7 +254,7 @@ const LinkController = {
     }
   },
 
-  // Remove tag from Link
+  
   async destroyTag(req, res) {
     const { id, tag } = req.params;
     const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
@@ -274,7 +274,6 @@ const LinkController = {
       console.log(uidToQuery)
       const uniqueTags = await Link.distinct("tags", { uid : uidToQuery });
 
-      // Envia a lista de tags como resposta
       return res.status(200).json(uniqueTags);
     } catch (error) {
       console.error(error);
@@ -468,7 +467,6 @@ const LinkController = {
     res.end();
   },
 
-  // Limpeza da tabela toda
   async destroyAll(req, res) {
     const { storeName } = req.params;
     const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
@@ -480,7 +478,7 @@ const LinkController = {
     res.end();
   },
 
-  // Limpeza de variações
+  
   async clearRate(req, res) {
     const { storeName } = req.params;
         const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);

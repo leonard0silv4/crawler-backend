@@ -101,7 +101,6 @@ export default {
 
       const { userId, ownerId } = await verifyToken.recoverAuth(req, res);
 
-      // Impedir duplicidade de número de nota
       const notaExistente = await NfeEntry.findOne({ numeroNota, ownerId });
       if (notaExistente) {
         return res
@@ -109,7 +108,6 @@ export default {
           .json({ error: "Nota fiscal vazio." });
       }
 
-      // Buscar e processar observações de produtos com histórico
       const observation_history = [];
 
       await Promise.all(
@@ -140,7 +138,6 @@ export default {
 
             observation_history.push(entry);
 
-            // Atualização retroativa
             await NfeEntry.updateOne(
               { _id: ultimaNota._id },
               { $push: { observation_history: entry } }
@@ -149,7 +146,6 @@ export default {
         })
       );
 
-      // Criar nova nota fiscal
       const nota = await NfeEntry.create({
         fornecedor,
         numeroNota,

@@ -13,6 +13,7 @@ import LogController from './controllers/LogController.js';
 import RoleController from './controllers/RoleController.js';
 import PermissionController from './controllers/PermissionController.js';
 import DashboardController from './controllers/DashboardController.js';
+import ProductController from './controllers/ProductController.js';
 import OrdersController, {clearSummaryCache} from "./controllers/OrderController.js";
 import { fetchAndStoreMonthlySummary } from "./services/fetchMonthlyBaseLinker.js";
 
@@ -125,6 +126,15 @@ routes.get("/nfe",verifyJWT.isTokenized, NfController.index);
 routes.get("/nfe/:id",verifyJWT.isTokenized, NfController.show);
 routes.put("/nfe/:id",verifyJWT.isTokenized, NfController.update);
 routes.delete("/nfe/:id",verifyJWT.isTokenized, NfController.destroy);
+
+
+// Rotas de produto
+routes.get("/products", verifyJWT.isTokenized, ProductController.index);
+routes.post("/products", verifyJWT.isTokenized, ProductController.store);
+routes.put("/products/:id", verifyJWT.isTokenized, ProductController.update);
+routes.delete("/products", verifyJWT.isTokenized, ProductController.deleteAll);
+routes.delete("/products/:id", verifyJWT.isTokenized, ProductController.delete);
+routes.post("/products/import", verifyJWT.isTokenized, ProductController.importFromXLS);
 
 // backup
 routes.get("/backup", BackupController.backup);
