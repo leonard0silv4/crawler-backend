@@ -105,7 +105,7 @@ export default {
       if (notaExistente) {
         return res
           .status(400)
-          .json({ error: "Nota fiscal vazio." });
+          .json({ error: "Número nota fiscal já existe." });
       }
 
       const observation_history = [];
