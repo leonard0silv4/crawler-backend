@@ -68,6 +68,10 @@ export async function fetchAndStoreMonthlySummary(year, month) {
           continue;
 
         const source = order.order_source || "outros";
+
+        if (order.order_source === "shop") {
+          if (order.payment_done == 0) continue;
+        }
         const productsTotal = (order.products || []).reduce((sum, product) => {
           const price = parseFloat(product.price_brutto || 0);
           const quantity = parseFloat(product.quantity || 1);
@@ -137,17 +141,19 @@ export async function fetchAndStoreMonthlySummary(year, month) {
     };
   });
 
-await BaseLinkerMonthlySummary.deleteMany({ month: monthStr }); // garante limpeza
+  await BaseLinkerMonthlySummary.deleteMany({ month: monthStr }); // garante limpeza
 
-if (!monthStr || !summary.length) {
-  throw new Error(`Dados inválidos para salvar resumo: month=${monthStr}, summary vazio`);
-}
+  if (!monthStr || !summary.length) {
+    throw new Error(
+      `Dados inválidos para salvar resumo: month=${monthStr}, summary vazio`
+    );
+  }
 
-await BaseLinkerMonthlySummary.create({
-  month: monthStr,
-  summary,
-  hourlySales,
-});
+  await BaseLinkerMonthlySummary.create({
+    month: monthStr,
+    summary,
+    hourlySales,
+  });
 
   console.log(
     `🧾 [FINALIZADO] Resumo ${monthStr} salvo com ${totalOrdersCount} pedidos agregados`
