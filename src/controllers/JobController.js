@@ -43,6 +43,7 @@ const JobController = {
       pago,
       dataPgto,
       faccionistaId,
+      observacao,
     } = req.body;
 
     try {
@@ -65,6 +66,7 @@ const JobController = {
         pago,
         dataPgto,
         faccionistaId,
+        observacao,
         ownerId: uidToQuery,
       });
 
@@ -308,6 +310,42 @@ const JobController = {
       console.error("Erro updateRate:", error);
       return res.status(500).json({ error: "Erro updateRate." });
 
+    }
+  },
+
+  async updateObservacao(req, res) {
+    const { id, value } = req.body;
+    const userId = await verifyToken.recoverUid(req, res);
+
+    try {
+      const job = await Job.findById(id);
+      if (!job) {
+        return res.status(404).json({ error: "Job não encontrado." });
+      }
+
+      const oldObservacao = job.observacao;
+
+      job.observacao = value;
+
+      await job.save();
+      await LogController.logJobChange({
+        jobId: job._id,
+        userId,
+        action: "update",
+        field: "observacao",
+        oldValue: oldObservacao,
+        newValue: value,
+        req,
+        res
+      });
+
+      JobController.emitSSE("jobUpdated", { job });
+
+      return res.json({ message: "Observação atualizada com sucesso.", job });
+
+    } catch (error) {
+      console.error("Erro updateObservacao:", error);
+      return res.status(500).json({ error: "Erro ao atualizar observação." });
     }
   },
 
