@@ -147,7 +147,7 @@ export default {
   async update(req, res) {
     try {
       const { id } = req.params;
-      const { username, email, password, roleId, permissions } = req.body;
+      const { username, email, password, roleId, permissions, notes } = req.body;
 
       const updateData = {};
 
@@ -155,6 +155,7 @@ export default {
       if (email) updateData.email = email;
       if (roleId) updateData.roleId = roleId;
       if (permissions) updateData.permissions = permissions;
+      if (notes !== undefined) updateData.notes = notes;
 
       if (password) {
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -175,6 +176,25 @@ export default {
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: "Erro ao atualizar usuário" });
+    }
+  },
+
+  async updateNotes(req, res) {
+    try {
+      const { id, value } = req.body;
+
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado." });
+      }
+
+      user.notes = value;
+      await user.save();
+
+      return res.json({ message: "Notas atualizadas com sucesso.", user });
+    } catch (error) {
+      console.error("Erro ao atualizar notas:", error);
+      return res.status(500).json({ error: "Erro ao atualizar notas." });
     }
   },
 
@@ -212,9 +232,9 @@ export default {
         const duplicatedField = Object.keys(err.keyValue || {})[0];
         let message = "Campo duplicado.";
 
-        
+
         if (duplicatedField === "username") {
-          
+
           message = "Nome de usuário já está em uso.";
           return res.status(500).json({ error: message });
         }

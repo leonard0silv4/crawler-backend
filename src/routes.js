@@ -59,6 +59,7 @@ routes.post("/saveConfig", verifyJWT.isTokenized, UserController.saveConfig);
 routes.get("/users", verifyJWT.isTokenized, UserController.index);
 routes.post("/users", verifyJWT.isTokenized, UserController.store);
 routes.put('/users/:id', verifyJWT.isTokenized, UserController.update);
+routes.put('/users/notes/update', verifyJWT.isTokenized, UserController.updateNotes);
 routes.delete('/users/:id', verifyJWT.isTokenized, UserController.destroy);
 
 // Roles
