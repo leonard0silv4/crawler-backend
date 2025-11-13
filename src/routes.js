@@ -21,6 +21,7 @@ import { fetchAndStoreMonthlySummary } from "./services/fetchMonthlyBaseLinker.j
 
 import verifyJWT from './middleware/authMiddleware.js'
 import NfController from './controllers/NfController.js';
+import XmlController from './controllers/XmlController.js';
 
 const routes = express.Router();
 
@@ -137,6 +138,10 @@ routes.put("/products/:id", verifyJWT.isTokenized, ProductController.update);
 routes.delete("/products", verifyJWT.isTokenized, ProductController.deleteAll);
 routes.delete("/products/:id", verifyJWT.isTokenized, ProductController.delete);
 routes.post("/products/import", verifyJWT.isTokenized, ProductController.importFromXLS);
+
+// Rotas XML Mercado Livre
+routes.post("/xml/upload", XmlController.upload);
+routes.get("/xml/download", XmlController.download);
 
 // backup
 routes.get("/backup", BackupController.backup);
