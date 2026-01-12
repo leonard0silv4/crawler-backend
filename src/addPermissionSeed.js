@@ -6,8 +6,8 @@ import Role from "./models/Role.js";
 
 dotenv.config({ path: "../.env" });
 
-const permissionName = 'manage_products_catalog'
-const permissionDescription = 'Catálogo de produtos'
+const permissionName = 'expedition_entry'
+const permissionDescription = 'Cadastrar entrada de expedição'
 
 async function addNewPermission() {
   try {

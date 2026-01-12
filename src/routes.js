@@ -16,6 +16,7 @@ import DashboardController from './controllers/DashboardController.js';
 import ProductController from './controllers/ProductController.js';
 import OrdersController, { clearSummaryCache } from "./controllers/OrderController.js";
 import { fetchAndStoreMonthlySummary } from "./services/fetchMonthlyBaseLinker.js";
+import ExpedicaoController from "./controllers/ExpedicaoController.js";
 
 
 
@@ -147,7 +148,6 @@ routes.get("/xml/download", XmlController.download);
 routes.get("/backup", BackupController.backup);
 
 // BaserLink orders
-
 routes.get(
   "/orders/summary",
   // verifyJWT.isTokenized,
@@ -163,6 +163,8 @@ routes.get(
   // verifyJWT.isTokenized,
   OrdersController.lastMonth
 );
+
+
 
 
 routes.post("/run-baselinker-monthly-summary", async (req, res) => {
@@ -181,6 +183,15 @@ routes.post("/run-baselinker-monthly-summary", async (req, res) => {
     res.status(500).json({ error: "Erro ao rodar o resumo mensal manualmente." });
   }
 });
+
+// Rotas de Expedição
+routes.get("/expedicao/verificar/:orderId", verifyJWT.isTokenized, ExpedicaoController.verificar);
+routes.post("/expedicao/registrar", verifyJWT.isTokenized, ExpedicaoController.registrar);
+routes.get("/expedicao/meta", verifyJWT.isTokenized, ExpedicaoController.obterMeta);
+routes.post("/expedicao/meta", verifyJWT.isTokenized, ExpedicaoController.configurarMeta);
+routes.post("/expedicao/encerrar-dia", verifyJWT.isTokenized, ExpedicaoController.encerrarDia);
+routes.get("/expedicao/dia-encerrado", verifyJWT.isTokenized, ExpedicaoController.verificarDiaEncerrado);
+routes.get("/expedicao/produtividade", verifyJWT.isTokenized, ExpedicaoController.produtividade);
 
 routes.get("/events", (req, res) => {
 
@@ -206,6 +217,8 @@ routes.get("/events", (req, res) => {
     global.sseClients = global.sseClients.filter((client) => client !== res);
   });
 });
+
+
 
 // Rota QR Code para confirmar recebimento de lote (autenticada)
 // IMPORTANTE: Esta rota deve ficar por último para evitar conflitos com outras rotas

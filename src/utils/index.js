@@ -2,14 +2,24 @@ import superagent from "superagent";
 import * as cheerio from "cheerio";
 
 import Link from "../models/Link.js";
+import { loadCookies } from "./cookieManager.js";
 
 export default {
   async updateMyPriceFromCatalog(catalogUrl) {
     console.log("search on list sellers");
-    const response = await superagent.get(`${catalogUrl}/s`).timeout({
-      response: 3000,
-      deadline: 5000,
-    });
+    const { cookieString } = await loadCookies();
+    
+    const request = superagent.get(`${catalogUrl}/s`)
+      .timeout({
+        response: 3000,
+        deadline: 5000,
+      });
+    
+    if (cookieString) {
+      request.set('Cookie', cookieString);
+    }
+    
+    const response = await request;
 
     const $ = cheerio.load(response.text);
     const form = $(`span:contains("${process.env.STORE_NAME}")`).closest(
@@ -33,10 +43,19 @@ export default {
 
   async extractLinks(url) {
     try {
-      const response = await superagent.get(url).timeout({
-        response: 5000,
-        deadline: 10000,
-      });
+      const { cookieString } = await loadCookies();
+      
+      const request = superagent.get(url)
+        .timeout({
+          response: 5000,
+          deadline: 10000,
+        });
+      
+      if (cookieString) {
+        request.set('Cookie', cookieString);
+      }
+      
+      const response = await request;
 
       let linksArray = [];
 
@@ -56,13 +75,21 @@ export default {
 
   async getDataWithRetry(url, maxRetries = 3) {
     let tentativaAtual = 1;
+    const { cookieString } = await loadCookies();
 
     while (tentativaAtual <= maxRetries) {
       try {
-        const response = await superagent.get(url).timeout({
-          response: 5000,
-          deadline: 10000,
-        });
+        const request = superagent.get(url)
+          .timeout({
+            response: 5000,
+            deadline: 10000,
+          });
+        
+        if (cookieString) {
+          request.set('Cookie', cookieString);
+        }
+        
+        const response = await request;
 
         const $ = cheerio.load(response.text);
 
@@ -70,8 +97,8 @@ export default {
 
         $('script[type="application/ld+json"]').each((index, element) => {
           const scriptContent = $(element).html();
-
-          // Verificar se o script contém '@type":"Product"'
+          
+          
           if (scriptContent.includes('@type":"Product"')) {
             jsonRaw = scriptContent;
           }
@@ -122,12 +149,13 @@ export default {
             return false;
           }
         });
-
         if (jsonRaw) {
           result = JSON.parse(jsonRaw);
+          
           if (paused)
             result.offers.availability = "https://schema.org/OutOfStock";
         } else {
+          const imgSrc = $(".ui-pdp-gallery__figure img").attr("src");
           result = {
             offers: {
               price: $('[itemprop="price"]').attr("content"),
@@ -137,9 +165,7 @@ export default {
             },
             sku,
             name: $(".ui-pdp-title").text(),
-            image: $(".ui-pdp-gallery__figure img")
-              .attr("src")
-              .replace(".jpg", ".webp"),
+            image: imgSrc?.endsWith(".webp") ? imgSrc : imgSrc?.replace(".jpg", ".webp"),
           };
         }
 
@@ -147,7 +173,8 @@ export default {
           aggregateRating =
             result?.offers?.seller?.aggregateRating?.ratingValue;
         }
-
+        
+        
         return {
           ...result,
           seller: seller || result?.offers?.seller?.name,
