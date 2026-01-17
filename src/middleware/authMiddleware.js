@@ -12,8 +12,7 @@ const verifyJWT = {
       
       if (err) {
         console.log(err)
-        if(err.name === 'TokenExpiredError') return res.status(440).json({ auth: false, message: 'Ops, sessão expirada' });
-        if(err.name === 'JsonWebTokenError') return res.status(440).json({ auth: false, message: 'Ops, sessão expirada' });
+        if(err.name === 'TokenExpiredError' || err.name === 'JsonWebTokenError' ) return res.status(440).json({ auth: false, message: 'Ops, sessão expirada' });
         return res.status(500).json({ auth: false, message: 'Falha ao autenticar o token' });
       }
       next();

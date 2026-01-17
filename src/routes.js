@@ -191,6 +191,7 @@ routes.get("/expedicao/meta", verifyJWT.isTokenized, ExpedicaoController.obterMe
 routes.post("/expedicao/meta", verifyJWT.isTokenized, ExpedicaoController.configurarMeta);
 routes.post("/expedicao/encerrar-dia", verifyJWT.isTokenized, ExpedicaoController.encerrarDia);
 routes.get("/expedicao/dia-encerrado", verifyJWT.isTokenized, ExpedicaoController.verificarDiaEncerrado);
+routes.get("/expedicao/dashboard", verifyJWT.isTokenized, ExpedicaoController.dashboard);
 routes.get("/expedicao/produtividade", verifyJWT.isTokenized, ExpedicaoController.produtividade);
 
 routes.get("/events", (req, res) => {

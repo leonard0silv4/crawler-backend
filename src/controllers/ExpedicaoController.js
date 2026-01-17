@@ -458,14 +458,177 @@ export default {
   },
 
   /**
-   * 7. Obter Produtividade (Dashboard)
+   * 7. Dashboard com Filtro por Data
+   * GET /expedicao/dashboard?data=YYYY-MM-DD (obrigatório)
+   */
+  async dashboard(req, res) {
+    try {
+      const { data } = req.query;
+
+      // Validar data obrigatória
+      if (!data) {
+        return res.status(400).json({
+          error: "Parâmetro 'data' é obrigatório (formato: YYYY-MM-DD)"
+        });
+      }
+
+      // Parsear data manualmente para evitar problema de timezone UTC
+      const [year, month, day] = data.split('-').map(Number);
+      const dataConsulta = new Date(year, month - 1, day, 0, 0, 0, 0);
+
+      // Verificar se data é válida
+      if (isNaN(dataConsulta.getTime())) {
+        return res.status(400).json({
+          error: "Data inválida. Use o formato YYYY-MM-DD"
+        });
+      }
+
+      // Verificar se o dia foi encerrado
+      const diaEncerrado = await ExpedicaoDiaEncerrado.findOne({ data: dataConsulta });
+
+      // Buscar meta do dia
+      const meta = await ExpedicaoMeta.findOne({ data: dataConsulta });
+
+      // Buscar registros do dia (baseado em dataContabilizacao)
+      const registros = await ExpedicaoRegistro.find({
+        dataContabilizacao: dataConsulta,
+      });
+
+      const totalGeral = registros.length;
+
+      // Calcular por seller
+      const porSellerContagem = await ExpedicaoRegistro.aggregate([
+        {
+          $match: {
+            dataContabilizacao: dataConsulta,
+          },
+        },
+        {
+          $group: {
+            _id: "$seller",
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+
+      let porSeller;
+      if (meta && meta.tipoConfiguracao === "porSeller") {
+        // Formato detalhado com metas
+        porSeller = {};
+        const sellers = ["mercadoLivre", "shopee", "amazon", "outros"];
+        
+        sellers.forEach((seller) => {
+          const contagem = porSellerContagem.find((p) => p._id === seller);
+          const atual = contagem ? contagem.count : 0;
+          const metaSeller = meta.porSeller?.[seller] || 0;
+          porSeller[seller] = {
+            atual,
+            meta: metaSeller,
+            porcentagem: metaSeller > 0 ? (atual / metaSeller) * 100 : 0,
+          };
+        });
+      } else {
+        // Formato simples sem metas
+        porSeller = {
+          mercadoLivre: 0,
+          shopee: 0,
+          amazon: 0,
+          outros: 0,
+        };
+        porSellerContagem.forEach((item) => {
+          if (item._id && porSeller[item._id] !== undefined) {
+            porSeller[item._id] = item.count;
+          }
+        });
+      }
+
+      // Calcular porcentagem concluída (se meta for total)
+      let porcentagemConcluida = null;
+      if (meta && meta.tipoConfiguracao === "total" && meta.total > 0) {
+        porcentagemConcluida = (totalGeral / meta.total) * 100;
+      }
+
+      // Calcular por mesa
+      const mesas = ["M1", "M2", "M3", "M4"];
+      const porMesa = {};
+
+      for (const mesa of mesas) {
+        const registrosMesa = registros.filter((r) => r.mesaId === mesa);
+
+        // Total do dia
+        const totalDia = registrosMesa.length;
+
+        // Ritmo atual não faz sentido para dados históricos
+        // Vou calcular apenas se for o dia atual
+        const hoje = getStartOfDay();
+        let ritmoAtual = 0;
+        
+        if (formatDate(dataConsulta) === formatDate(hoje)) {
+          const agora = new Date();
+          const umHoraAtras = new Date(agora.getTime() - 60 * 60 * 1000);
+          ritmoAtual = await ExpedicaoRegistro.countDocuments({
+            mesaId: mesa,
+            createdAt: { $gte: umHoraAtras, $lte: agora },
+          });
+        }
+
+        // Por hora (usa createdAt para hora, mas filtra por dataContabilizacao)
+        const porHora = {
+          "07:00 às 08:00": 0,
+          "08:00 às 09:00": 0,
+          "09:00 às 10:00": 0,
+          "10:00 às 11:00": 0,
+          "11:00 às 12:00": 0,
+          "13:00 às 14:00": 0,
+          "14:00 às 15:00": 0,
+          "15:00 às 16:00": 0,
+          "16:00 às 17:00": 0,
+        };
+
+        registrosMesa.forEach((reg) => {
+          const hora = reg.createdAt.getHours();
+          const faixa = `${hora.toString().padStart(2, "0")}:00 às ${(hora + 1)
+            .toString()
+            .padStart(2, "0")}:00`;
+          if (porHora[faixa] !== undefined) {
+            porHora[faixa]++;
+          }
+        });
+
+        porMesa[mesa] = { totalDia, ritmoAtual, porHora };
+      }
+
+      return res.status(200).json({
+        data: formatDate(dataConsulta),
+        diaEncerrado: !!diaEncerrado,
+        meta: meta
+          ? {
+              tipoConfiguracao: meta.tipoConfiguracao,
+              total: meta.tipoConfiguracao === "total" ? meta.total : null,
+              porSeller: meta.tipoConfiguracao === "porSeller" ? meta.porSeller : null,
+              horariosColeta: meta.horariosColeta || null,
+            }
+          : null,
+        totalGeral,
+        porcentagemConcluida,
+        porSeller,
+        porMesa,
+      });
+    } catch (error) {
+      console.error("Erro ao obter dashboard:", error);
+      return res.status(500).json({ error: "Erro interno do servidor" });
+    }
+  },
+
+  /**
+   * 8. Obter Produtividade (Dashboard Atual)
    * GET /expedicao/produtividade
    */
   async produtividade(req, res) {
     try {
       // Determinar data de contabilização
       const dataConsulta = req.query.data 
-        ? getStartOfDay(new Date(req.query.data))
+        ? getStartOfDay(req.query.data)
         : await getDataContabilizacao();
 
       // Verificar se dia foi encerrado
