@@ -105,7 +105,7 @@ export default {
         });
 
         const seller = $(
-          ".ui-pdp-container__row .ui-pdp-seller__link-trigger-button span:nth-child(2)"
+          ".ui-pdp-container__row .ui-pdp-seller__link-trigger-button a"
         )
           .first()
           .text();
