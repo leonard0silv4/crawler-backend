@@ -110,7 +110,7 @@ const JobController = {
 
 
 
-    if (!["recebidoConferido", "lotePronto", "pago", "lotePronto", "aprovado", "recebido", "emenda", "isArchived"].includes(field)) {
+    if (!["recebidoConferido", "lotePronto", "pago", "lotePronto", "aprovado", "recebido", "emenda", "isArchived", "dischargedByQrCode"].includes(field)) {
       return res
         .status(400)
         .json({ error: "Campo inválido para atualização." });
@@ -142,10 +142,17 @@ const JobController = {
         job['dataAprovado'] = new Date(localDate.getTime()).toISOString();
       }
 
-
-      // Atualiza o campo
+      // Atualiza o campo (toggle)
       const oldValue = job[field];
       job[field] = !job[field];
+
+      if (field === 'dischargedByQrCode') {
+        if (job['dischargedByQrCode']) {
+          job['dataDischargedByQrCode'] = new Date(localDate.getTime()).toISOString();
+        } else {
+          job['dataDischargedByQrCode'] = null;
+        }
+      }
 
       if (field === "emenda") {
 
@@ -373,7 +380,7 @@ const JobController = {
 
 
     // Validação do campo
-    if (!["recebidoConferido", "lotePronto", "pago", "aprovado", "recebido", "emenda", "emAnalise", "isArchived"].includes(field)) {
+    if (!["recebidoConferido", "lotePronto", "pago", "aprovado", "recebido", "emenda", "emAnalise", "isArchived", "dischargedByQrCode"].includes(field)) {
       return res.status(400).json({ error: "Campo inválido para atualização." });
     }
 
@@ -400,6 +407,14 @@ const JobController = {
 
         const oldValue = job[field];
         job[field] = !job[field];
+
+        if (field === 'dischargedByQrCode') {
+          if (job['dischargedByQrCode']) {
+            job['dataDischargedByQrCode'] = new Date(localDate.getTime()).toISOString();
+          } else {
+            job['dataDischargedByQrCode'] = null;
+          }
+        }
 
         if (field == "recebido") {
           if (job["aprovado"] == false) {
@@ -497,6 +512,220 @@ const JobController = {
       return res.status(500).json({ error: "Erro ao atualizar jobs." });
     }
 
+  },
+
+  async listBatchesReceivedToday(req, res) {
+    try {
+      const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+      const uidToQuery = role === "owner" ? String(userId) : String(ownerId);
+
+      let startOfDay, endOfDay;
+      const dateParam = req.query.date;
+      if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+        const [y, m, d] = dateParam.split("-").map(Number);
+        const target = new Date(y, m - 1, d);
+        if (!isNaN(target.getTime())) {
+          startOfDay = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 0, 0, 0, 0);
+          endOfDay = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 23, 59, 59, 999);
+        }
+      }
+      if (!startOfDay || !endOfDay) {
+        const today = new Date();
+        startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+        endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      }
+
+      const jobs = await Job.find({
+        ownerId: uidToQuery,
+        isArchived: { $ne: true },
+        $or: [
+          { recebido: true, dataRecebido: { $gte: startOfDay, $lte: endOfDay } },
+          { recebidoConferido: true, dataRecebidoConferido: { $gte: startOfDay, $lte: endOfDay } }
+        ]
+      })
+        .populate("faccionistaId", "username lastName")
+        .sort({ dataRecebido: -1, dataRecebidoConferido: -1 })
+        .lean();
+
+      return res.json(jobs);
+    } catch (error) {
+      console.error("Erro ao listar lotes recebidos por data:", error);
+      return res.status(500).json({
+        error: "Erro ao listar lotes recebidos por data",
+        message: error.message || "Ocorreu um erro interno no servidor"
+      });
+    }
+  },
+
+  async markBatchAsReceived(req, res) {
+    try {
+      const { idLote, idFaccionista } = req.body;
+
+      if (!idLote || !idFaccionista) {
+        return res.status(400).json({
+          success: false,
+          error: "Parâmetros obrigatórios",
+          message: "idLote e idFaccionista são obrigatórios"
+        });
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(idFaccionista) || !mongoose.Types.ObjectId.isValid(idLote)) {
+        return res.status(400).json({
+          success: false,
+          error: "Parâmetros inválidos",
+          message: "Os IDs fornecidos não são válidos"
+        });
+      }
+
+      const { userId: authUserId, role, ownerId: authOwnerId } = await verifyToken.recoverAuth(req, res);
+      const isFaccionista = role === "faccionista";
+      const ownerReference = String(authOwnerId ?? authUserId);
+
+      const job = await Job.findById(idLote)
+        .setOptions({ bypassMiddleware: true })
+        .select("lote faccionistaId ownerId recebidoConferido dataRecebidoConferido recebido dataRecebido")
+        .lean();
+
+      if (!job) {
+        return res.status(404).json({
+          success: false,
+          error: "Lote não encontrado",
+          message: "O lote especificado não existe"
+        });
+      }
+
+      const jobOwnerId = job.ownerId ? String(job.ownerId) : null;
+      if (!jobOwnerId || jobOwnerId !== ownerReference) {
+        return res.status(403).json({
+          success: false,
+          error: "Sem permissão",
+          message: "Este lote não pertence à sua conta"
+        });
+      }
+
+      if (String(job.faccionistaId) !== String(idFaccionista)) {
+        return res.status(400).json({
+          success: false,
+          error: "Faccionista incompatível",
+          message: "O lote informado não pertence a esse faccionista"
+        });
+      }
+
+      if (isFaccionista && String(authUserId) !== String(job.faccionistaId)) {
+        return res.status(403).json({
+          success: false,
+          error: "Sem permissão",
+          message: "Você não está autorizado a confirmar este lote"
+        });
+      }
+
+      const faccionista = await User.findById(job.faccionistaId).select("username lastName").lean();
+      if (!faccionista) {
+        return res.status(404).json({
+          success: false,
+          error: "Faccionista não encontrado",
+          message: "Não foi possível localizar o faccionista do lote"
+        });
+      }
+
+      const nomeFaccionista = faccionista.lastName
+        ? `${faccionista.username} ${faccionista.lastName}`
+        : faccionista.username;
+
+      const relevantField = isFaccionista ? "recebidoConferido" : "recebido";
+      const relevantDateField = isFaccionista ? "dataRecebidoConferido" : "dataRecebido";
+      const alreadyMarked = Boolean(job[relevantField]);
+
+      if (alreadyMarked) {
+        const dataObj = job[relevantDateField] ? new Date(job[relevantDateField]) : null;
+        const timestampIso = dataObj ? dataObj.toISOString() : null;
+
+        const responseData = {
+          nomeFaccionista,
+          lote: job.lote,
+          updatedField: relevantField,
+          timestampIso,
+          dataFormatada: dataObj ? dataObj.toLocaleDateString("pt-BR") : null,
+          horaFormatada: dataObj ? dataObj.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : null,
+          message: isFaccionista
+            ? "Este lote já foi confirmado anteriormente pelo faccionista."
+            : "Este lote já foi marcado como recebido pela empresa."
+        };
+
+        if (isFaccionista) {
+          responseData.dataRecebidoConferido = timestampIso;
+        } else {
+          responseData.dataRecebido = timestampIso;
+        }
+
+        return res.json({
+          success: true,
+          alreadyMarked: true,
+          data: responseData
+        });
+      }
+
+      const now = new Date();
+      const updateFields = {
+        [relevantField]: true,
+        [relevantDateField]: now
+      };
+
+      const updatedJob = await Job.findOneAndUpdate(
+        { _id: idLote },
+        { $set: updateFields },
+        { new: true }
+      ).setOptions({ bypassMiddleware: true });
+
+      JobController.emitSSE("jobUpdated", { job: updatedJob });
+
+      Log.create({
+        jobId: updatedJob._id,
+        userId: authUserId,
+        action: "update",
+        field: relevantField,
+        oldValue: job[relevantField] ?? false,
+        newValue: true,
+        ownerId: String(updatedJob.ownerId),
+      }).catch((logError) => {
+        console.error("Erro ao criar log:", logError);
+      });
+
+      const timestampIso = now.toISOString();
+      const dataFormatada = now.toLocaleDateString("pt-BR");
+      const horaFormatada = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+      const responseData = {
+        nomeFaccionista,
+        lote: updatedJob.lote,
+        updatedField: relevantField,
+        timestampIso,
+        dataFormatada,
+        horaFormatada,
+        message: isFaccionista
+          ? "Lote marcado como recebido e conferido pelo faccionista."
+          : "Lote marcado como recebido pela empresa."
+      };
+
+      if (isFaccionista) {
+        responseData.dataRecebidoConferido = timestampIso;
+      } else {
+        responseData.dataRecebido = timestampIso;
+      }
+
+      return res.json({
+        success: true,
+        alreadyMarked: false,
+        data: responseData
+      });
+    } catch (error) {
+      console.error("Erro ao marcar lote como recebido:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Erro ao processar solicitação",
+        message: error.message || "Ocorreu um erro interno no servidor"
+      });
+    }
   },
 
   async confirmReceiptByQrCode(req, res) {
@@ -602,12 +831,9 @@ const JobController = {
       const now = new Date();
       const updateFields = {
         [relevantField]: true,
-        [relevantDateField]: now
+        [relevantDateField]: now,
+        
       };
-
-      if (isFaccionista) {
-        updateFields.receivedCheckedByQrCode = true;
-      }
 
       const updatedJob = await Job.findOneAndUpdate(
         { _id: idLote },
