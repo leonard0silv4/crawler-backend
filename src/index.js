@@ -8,6 +8,7 @@ import cron from "node-cron";
 import http from "http";
 import CronController from "./controllers/CronController.js";
 import { fetchAndStoreMonthlySummary } from "./services/fetchMonthlyBaseLinker.js";
+import { runAllActiveSellers } from "./services/sellerScraper.js";
 
 
 dotenv.config({ path: "../.env" });
@@ -38,6 +39,12 @@ cron.schedule("*/30 * * * *", () => {
  cron.schedule("0 2 * * *", async () => {
   console.log("🔁 Executando rotina diária de coleta de produtos...");
   await CronController.cronUserMeli();
+});
+
+// Cron diário: scraping de sellers cadastrados (todo dia às 03:00)
+cron.schedule("0 3 * * *", async () => {
+  console.log("[CRON] Iniciando scraping de sellers cadastrados...");
+  await runAllActiveSellers();
 });
 
 cron.schedule("0 6 1 * *", async () => {

@@ -31,7 +31,7 @@ export default {
 
 
   async getDataWithRetry(url, maxRetries = 5) {
-
+    console.log("🚀 ~ getDataWithRetry ~ url:", url);
     let tentativaAtual = 1;
 
     while (tentativaAtual <= maxRetries) {
@@ -56,7 +56,7 @@ export default {
 
         const seller = $('div.ui-pdp-seller__link-trigger.non-selectable').text();
 
-
+        
         $('script').each((index, element) => {
           const scriptContent = $(element).html();
           const regex = /"startTime":"([^"]+)"/;
@@ -74,7 +74,7 @@ export default {
 
         const result = JSON.parse(jsonRaw);
 
-
+        console.log("🚀 ~ getDataWithRetry ~ result:", result);
 
         return {
           ...result,

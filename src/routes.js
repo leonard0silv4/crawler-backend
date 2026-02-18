@@ -23,6 +23,7 @@ import ExpedicaoController from "./controllers/ExpedicaoController.js";
 import verifyJWT from './middleware/authMiddleware.js'
 import NfController from './controllers/NfController.js';
 import XmlController from './controllers/XmlController.js';
+import SellerMonitorController from './controllers/SellerMonitorController.js';
 
 const routes = express.Router();
 
@@ -221,6 +222,24 @@ routes.get("/events", (req, res) => {
   });
 });
 
+
+
+// ── Seller Monitor ────────────────────────────────────────────────────────────
+// Sellers cadastrados
+routes.get("/seller-monitor", verifyJWT.isTokenized, SellerMonitorController.index);
+routes.post("/seller-monitor", verifyJWT.isTokenized, SellerMonitorController.store);
+routes.delete("/seller-monitor/:id", verifyJWT.isTokenized, SellerMonitorController.destroy);
+
+// Produtos de um seller
+routes.get("/seller-monitor/:id/products", verifyJWT.isTokenized, SellerMonitorController.getProducts);
+
+// Executar scraping manual
+routes.post("/seller-monitor/:id/run", verifyJWT.isTokenized, SellerMonitorController.runScrape);
+
+// Alertas
+routes.get("/seller-monitor/:id/alerts", verifyJWT.isTokenized, SellerMonitorController.getAlerts);
+routes.put("/seller-monitor/:id/alerts/read-all", verifyJWT.isTokenized, SellerMonitorController.markAllAlertsRead);
+routes.put("/seller-monitor/alerts/:alertId/read", verifyJWT.isTokenized, SellerMonitorController.markAlertRead);
 
 
 // Rota QR Code para confirmar recebimento de lote (autenticada)

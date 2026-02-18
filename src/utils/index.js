@@ -76,7 +76,7 @@ export default {
   async getDataWithRetry(url, maxRetries = 3) {
     let tentativaAtual = 1;
     const { cookieString } = await loadCookies();
-
+    
     while (tentativaAtual <= maxRetries) {
       try {
         const request = superagent.get(url)
@@ -90,14 +90,14 @@ export default {
         }
         
         const response = await request;
-
+        
         const $ = cheerio.load(response.text);
 
         let jsonRaw, time, aggregateRating, result, sku, autoPrice;
 
         $('script[type="application/ld+json"]').each((index, element) => {
           const scriptContent = $(element).html();
-          
+          console.log("🚀 ~ getDataWithRetry ~ scriptContent:", scriptContent);
           
           if (scriptContent.includes('@type":"Product"')) {
             jsonRaw = scriptContent;
