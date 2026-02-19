@@ -3,6 +3,7 @@ import SellerProduct from "../models/SellerProduct.js";
 import SellerAlert from "../models/SellerAlert.js";
 import verifyToken from "../middleware/authMiddleware.js";
 import { runScraperForSeller } from "../services/sellerScraper.js";
+import { enqueueSellerScrape, isSellerPending } from "../services/scraperQueue.js";
 
 const SellerMonitorController = {
   /**
@@ -121,7 +122,9 @@ const SellerMonitorController = {
   },
 
   /**
-   * Dispara manualmente o scraping de um seller.
+   * Enfileira o scraping do seller e retorna 202 imediatamente.
+   * A fila (scraperQueue) controla quantos rodam em paralelo (máx 2).
+   * O frontend detecta o término via polling.
    */
   async runScrape(req, res) {
     try {
@@ -133,26 +136,23 @@ const SellerMonitorController = {
       if (!seller)
         return res.status(404).json({ error: "Seller não encontrado" });
 
-      // Execução síncrona para o manual (aguarda concluir e retorna resultado)
-      await runScraperForSeller(seller);
+      // Bloqueia se o seller já está rodando ou aguardando na fila
+      if (seller.scraping || isSellerPending(seller._id)) {
+        return res.status(409).json({
+          error: "Scraping já em andamento ou na fila para este seller",
+        });
+      }
 
-      const updatedSeller = await SellerPage.findById(seller._id).lean();
-      const totalProducts = await SellerProduct.countDocuments({
-        sellerId: seller._id,
-      });
-      const unreadAlerts = await SellerAlert.countDocuments({
-        sellerId: seller._id,
-        read: false,
-      });
+      // Marca como scraping imediatamente para o frontend mostrar o indicador
+      // mesmo enquanto o job aguarda na fila
+      await SellerPage.findByIdAndUpdate(seller._id, { $set: { scraping: true } });
 
-      return res.json({
-        ok: true,
-        message: "Scraping concluído com sucesso",
-        seller: { ...updatedSeller, totalProducts, unreadAlerts },
-      });
+      enqueueSellerScrape(seller, runScraperForSeller);
+
+      return res.status(202).json({ ok: true, message: "Scraping adicionado à fila" });
     } catch (err) {
       console.error("[SellerMonitor] runScrape error:", err);
-      return res.status(500).json({ error: "Erro ao executar scraping" });
+      return res.status(500).json({ error: "Erro ao iniciar scraping" });
     }
   },
 

@@ -1,13 +1,13 @@
 // addPermission.js
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import Permission from "./models/Permission.js";
-import Role from "./models/Role.js";
+import Permission from "../models/Permission.js";
+import Role from "../models/Role.js";
 
-dotenv.config({ path: "../.env" });
+dotenv.config({ path: "../../.env" });
 
-const permissionName = 'expedition_discharge'
-const permissionDescription = 'Descarregamento de lotes'
+const permissionName = 'seller_monitor'
+const permissionDescription = 'Tela de monitoramento de vendedores'
 
 async function addNewPermission() {
   try {

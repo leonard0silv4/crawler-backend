@@ -9,6 +9,7 @@ import http from "http";
 import CronController from "./controllers/CronController.js";
 import { fetchAndStoreMonthlySummary } from "./services/fetchMonthlyBaseLinker.js";
 import { runAllActiveSellers } from "./services/sellerScraper.js";
+import { resetStaleScrapingFlags } from "./services/scraperQueue.js";
 
 
 dotenv.config({ path: "../.env" });
@@ -26,7 +27,10 @@ mongoose
       // useUnifiedTopology: true,
     }
   )
-  .then(() => console.log("MongoDB conectado com sucesso!"))
+  .then(async () => {
+    console.log("MongoDB conectado com sucesso!");
+    await resetStaleScrapingFlags();
+  })
   .catch((err) => console.error("Erro ao conectar ao MongoDB:", err));
 
 // Cron job
@@ -42,7 +46,7 @@ cron.schedule("*/30 * * * *", () => {
 });
 
 // Cron diário: scraping de sellers cadastrados (todo dia às 03:00)
-cron.schedule("0 3 * * *", async () => {
+cron.schedule("0 6 * * *", async () => {
   console.log("[CRON] Iniciando scraping de sellers cadastrados...");
   await runAllActiveSellers();
 });

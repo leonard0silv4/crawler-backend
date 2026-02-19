@@ -24,6 +24,7 @@ import verifyJWT from './middleware/authMiddleware.js'
 import NfController from './controllers/NfController.js';
 import XmlController from './controllers/XmlController.js';
 import SellerMonitorController from './controllers/SellerMonitorController.js';
+import CookieController from './controllers/CookieController.js';
 
 const routes = express.Router();
 
@@ -241,6 +242,10 @@ routes.get("/seller-monitor/:id/alerts", verifyJWT.isTokenized, SellerMonitorCon
 routes.put("/seller-monitor/:id/alerts/read-all", verifyJWT.isTokenized, SellerMonitorController.markAllAlertsRead);
 routes.put("/seller-monitor/alerts/:alertId/read", verifyJWT.isTokenized, SellerMonitorController.markAlertRead);
 
+
+// Cookies do Mercado Livre
+routes.post("/cookies", verifyJWT.isTokenized, CookieController.update);
+routes.get("/cookies/pkl", verifyJWT.isTokenized, CookieController.downloadPkl);
 
 // Rota QR Code para confirmar recebimento de lote (autenticada)
 // IMPORTANTE: Esta rota deve ficar por último para evitar conflitos com outras rotas

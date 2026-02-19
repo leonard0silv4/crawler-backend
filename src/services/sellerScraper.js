@@ -251,6 +251,9 @@ export async function runScraperForSeller(seller) {
   const today = format(new Date(), "yyyy-MM-dd");
   const alertsToCreate = [];
 
+  // Marca o seller como "em scraping" para o frontend poder fazer polling
+  await SellerPage.findByIdAndUpdate(seller._id, { $set: { scraping: true } });
+
   console.log(`[SellerScraper] Iniciando scraping do seller ${seller._id} — ${seller.url}`);
 
   // --- 1. Coleta todos os produtos ---
@@ -259,6 +262,7 @@ export async function runScraperForSeller(seller) {
     scrapedProducts = await scrapeAllPages(seller.url);
   } catch (err) {
     console.error(`[SellerScraper] Erro ao scrape seller ${seller._id}:`, err.message);
+    await SellerPage.findByIdAndUpdate(seller._id, { $set: { scraping: false } });
     return;
   }
 
@@ -365,9 +369,9 @@ export async function runScraperForSeller(seller) {
     await SellerAlert.insertMany(alertsToCreate);
   }
 
-  // --- 5. Atualiza data da última execução ---
+  // --- 5. Atualiza data da última execução e libera o flag de scraping ---
   await SellerPage.findByIdAndUpdate(seller._id, {
-    $set: { lastRunAt: new Date() },
+    $set: { lastRunAt: new Date(), scraping: false },
   });
 
   console.log(
@@ -376,20 +380,17 @@ export async function runScraperForSeller(seller) {
 }
 
 /**
- * Executa o scraping de todos os sellers ativos.
- * Chamado pelo cron diário.
+ * Enfileira todos os sellers ativos para scraping.
+ * Chamado pelo cron diário — a fila controla a concorrência.
  */
 export async function runAllActiveSellers() {
-  const sellers = await SellerPage.find({ active: true });
-  console.log(`[SellerScraper] Iniciando cron — ${sellers.length} sellers ativos`);
+  const { enqueueSellerScrape } = await import("./scraperQueue.js");
+
+  // Pula sellers que já estão na fila ou com scraping ativo (evita duplicata com manual)
+  const sellers = await SellerPage.find({ active: true, scraping: false });
+  console.log(`[SellerScraper] Cron — enfileirando ${sellers.length} sellers`);
 
   for (const seller of sellers) {
-    try {
-      await runScraperForSeller(seller);
-    } catch (err) {
-      console.error(`[SellerScraper] Erro no seller ${seller._id}:`, err.message);
-    }
+    enqueueSellerScrape(seller, runScraperForSeller);
   }
-
-  console.log("[SellerScraper] Cron concluído");
 }

@@ -20,6 +20,19 @@ const newCookies = [
         "value": ""
     },
     {
+        "domain": ".www.mercadolivre.com.br",
+        "expirationDate": 1772233593.160859,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "c_Z1laz4H",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "1"
+    },
+    {
         "domain": ".mercadolivre.com.br",
         "hostOnly": false,
         "httpOnly": false,
@@ -33,7 +46,7 @@ const newCookies = [
     },
     {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1805938137.242224,
+        "expirationDate": 1806013250.632654,
         "hostOnly": false,
         "httpOnly": false,
         "name": "orguseridp",
@@ -58,6 +71,18 @@ const newCookies = [
         "value": "eyJpZCI6IjE3OTIzMjhhLTk0ZGEtNWE2OS04YjZlLTdiZmRiMThlYzczZiIsImNyZWF0ZWQiOjE2OTQyNjc0MTg3MTksImV4aXN0aW5nIjp0cnVlfQ=="
     },
     {
+        "domain": "www.mercadolivre.com.br",
+        "hostOnly": true,
+        "httpOnly": true,
+        "name": "_csrf",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": true,
+        "storeId": null,
+        "value": "6GUB0QKsu3_eTHJy10jhmIus"
+    },
+    {
         "domain": ".mercadolivre.com.br",
         "expirationDate": 1771763675.029199,
         "hostOnly": false,
@@ -71,21 +96,8 @@ const newCookies = [
         "value": "86010610"
     },
     {
-        "domain": ".lista.mercadolivre.com.br",
-        "expirationDate": 1773697247.072412,
-        "hostOnly": false,
-        "httpOnly": true,
-        "name": "c_Z2qNAD5",
-        "path": "/",
-        "sameSite": "no_restriction",
-        "secure": true,
-        "session": false,
-        "storeId": null,
-        "value": "1"
-    },
-    {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1802935037.513038,
+        "expirationDate": 1803010151.537733,
         "hostOnly": false,
         "httpOnly": false,
         "name": "cookiesPreferencesNotLogged",
@@ -111,19 +123,7 @@ const newCookies = [
     },
     {
         "domain": ".mercadolivre.com.br",
-        "hostOnly": false,
-        "httpOnly": false,
-        "name": "_cq_suid",
-        "path": "/",
-        "sameSite": "no_restriction",
-        "secure": true,
-        "session": true,
-        "storeId": null,
-        "value": "1.1771105258.bI7WnujdYmJNLyNH"
-    },
-    {
-        "domain": ".mercadolivre.com.br",
-        "expirationDate": 1805938137.242187,
+        "expirationDate": 1806013250.632519,
         "hostOnly": false,
         "httpOnly": true,
         "name": "ssid",
@@ -132,11 +132,11 @@ const newCookies = [
         "secure": true,
         "session": false,
         "storeId": null,
-        "value": "ghy-021721-0tkb6DmwIuINYRgUdaIPNvh8RsemxZ-__-79131345-__-1866072536407--RRR_0-RRR_0"
+        "value": "ghy-021818-sKjfMTINQlXUSU2kI0saPYqdQCoGJO-__-79131345-__-1866147650066--RRR_0-RRR_0"
     },
     {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1805938770.515243,
+        "expirationDate": 1806013252.118898,
         "hostOnly": false,
         "httpOnly": true,
         "name": "nsa_rotok",
@@ -145,11 +145,11 @@ const newCookies = [
         "secure": true,
         "session": false,
         "storeId": null,
-        "value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjMiLCJ0eXAiOiJKV1QifQ.eyJpZGVudGlmaWVyIjoiNjhiZmY5ZmEtYjlhNC00ZmQ4LWI3MzAtNmJjYjY3MTg4ZjYzIiwicm90YXRpb25faWQiOiI0NDExMjg4Zi0xNWVmLTQ5MDQtYTE2Ni1kNDY5Yjc5ZWIxOTQiLCJwbGF0Zm9ybSI6Ik1MIiwicm90YXRpb25fZGF0ZSI6MTc3MTM3OTM2NSwiZXhwIjoxNzczOTcwNzY1LCJqdGkiOiIzNjgxOTBiYi0xMDBhLTQ0ZmYtYTIyMi0wODk5ZWNkNWFlNmUiLCJpYXQiOjE3NzEzNzg3NjUsInN1YiI6IjY4YmZmOWZhLWI5YTQtNGZkOC1iNzMwLTZiY2I2NzE4OGY2MyJ9.NIKYRDkjt8xZg8iWDkGed5QefwLt5o6-5FXhwASDvgEw1bI6NCJ_9TMzFbfYc-hNUKdUtDnWDlQIMcoGLeKdyRjICnjnmkX8g6yCQciTB4BvwxqAeWGU9wj7oIdFiTqF1Ghm616D81p65FCjt5-Zd5wqPaki3FC1J6su8mx8LC8kHVZxpiek6PfE0xPy5CtatuCjPARXgKt0sRxkxy6XWb_o93La3YNzhTbzZ-JyqlEFHhC5y2L2YXur_C_EHGyLIo17zROwf730yV6iQ5QcoursJOUC0q-tYtLqRgodQO3OkKo_hQpvcPHyi2GHmFeeuNDIGRTTCGwPxoB5togl5g"
+        "value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjMiLCJ0eXAiOiJKV1QifQ.eyJpZGVudGlmaWVyIjoiZTRmYWUxNDItOTI1NC00MDRmLTk2YzgtODQ5N2EzOTQ2MWU5Iiwicm90YXRpb25faWQiOiI1YjcyN2NkYy1kN2Q2LTQzNzItYTEwMS03NWQzNzRjYTMyM2YiLCJwbGF0Zm9ybSI6Ik1MIiwicm90YXRpb25fZGF0ZSI6MTc3MTQ1Mzg1MCwiZXhwIjoxNzc0MDQ1MjUwLCJqdGkiOiJhNmRkOGRlMC0yMzc5LTRhYzgtYmQzZi04NGEyNzc2YzQzNzgiLCJpYXQiOjE3NzE0NTMyNTAsInN1YiI6ImU0ZmFlMTQyLTkyNTQtNDA0Zi05NmM4LTg0OTdhMzk0NjFlOSJ9.RwsiNKLHYrOtLynExlhH2bYrj5YkhEz7ZaVcjO4WT51rem3SWeQHSIPMuTvWS9Ye7H9drRtCsoU6D8MGAlb7rllBDfjeTl9DexlXvdBbkqIs0dOdPYZucX5H8e_h3xwEzUSQDCDz56RYp7-p8dZqd0K6TSpn4w7BSTaHaAYSDm80cN4VvsiP2dM1MZHUYzBtffZegbu7VNpaH7clQWgibkUb0NfChU1AF_LBX0hqFhuIw72c7NT1KbiH5EIlny7Tt00EyNXKn_5N-QDDVUR808ghkc-ma9pvxVxmJ9qmgfDJiq65Rsdc4iHp4lupbWCl56qgwUz7B-klUzetn9wpug"
     },
     {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1802914775,
+        "expirationDate": 1802989251,
         "hostOnly": false,
         "httpOnly": false,
         "name": "_hjSessionUser_720738",
@@ -174,8 +174,34 @@ const newCookies = [
         "value": "bone%20trucker"
     },
     {
+        "domain": "www.mercadolivre.com.br",
+        "expirationDate": 1802967340,
+        "hostOnly": true,
+        "httpOnly": false,
+        "name": "__rtbh.lid",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "%7B%22eventType%22%3A%22lid%22%2C%22id%22%3A%223UTJAX97rD6DS1uL1gIE%22%2C%22expiryDate%22%3A%222027-02-18T16%3A15%3A40.020Z%22%7D"
+    },
+    {
+        "domain": "www.mercadolivre.com.br",
+        "expirationDate": 1802967340,
+        "hostOnly": true,
+        "httpOnly": false,
+        "name": "__rtbh.uid",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "%7B%22eventType%22%3A%22uid%22%2C%22id%22%3A%2279131345%22%2C%22expiryDate%22%3A%222027-02-18T16%3A15%3A40.008Z%22%7D"
+    },
+    {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1779262782,
+        "expirationDate": 1779315346,
         "hostOnly": false,
         "httpOnly": false,
         "name": "_cq_duid",
@@ -185,18 +211,6 @@ const newCookies = [
         "session": false,
         "storeId": null,
         "value": "1.1704892813.hBSOB2kbdVVZNImf"
-    },
-    {
-        "domain": "lista.mercadolivre.com.br",
-        "hostOnly": true,
-        "httpOnly": true,
-        "name": "_csrf",
-        "path": "/",
-        "sameSite": "no_restriction",
-        "secure": true,
-        "session": true,
-        "storeId": null,
-        "value": "zhccPfw7D8TBw-8I0vPRND4O"
     },
     {
         "domain": ".mercadolivre.com.br",
@@ -213,7 +227,7 @@ const newCookies = [
     },
     {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1771379966,
+        "expirationDate": 1771454954,
         "hostOnly": false,
         "httpOnly": false,
         "name": "_hjSession_720738",
@@ -222,7 +236,7 @@ const newCookies = [
         "secure": true,
         "session": false,
         "storeId": null,
-        "value": "eyJpZCI6ImM2OGIwMjM4LTIwMTktNGFmNy1iZTNlLTlmZGIwYWJjODM3YyIsImMiOjE3NzEzNzgxNjY5NDcsInMiOjAsInIiOjAsInNiIjowLCJzciI6MCwic2UiOjAsImZzIjowLCJzcCI6MH0="
+        "value": "eyJpZCI6ImNkMGRlMzdlLTNmYmEtNDRmMi1iNDNiLWRhYWJkNGNmMjljNCIsImMiOjE3NzE0NTMxMjM3NDYsInMiOjAsInIiOjAsInNiIjowLCJzciI6MCwic2UiOjAsImZzIjowLCJzcCI6MH0="
     },
     {
         "domain": ".mercadolivre.com.br",
@@ -239,29 +253,16 @@ const newCookies = [
     },
     {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1771380657.156761,
+        "expirationDate": 1771455057,
         "hostOnly": false,
         "httpOnly": false,
         "name": "_mldataSessionId",
-        "path": "/",
-        "sameSite": null,
-        "secure": true,
-        "session": false,
-        "storeId": null,
-        "value": "cdd3e027-762d-4ead-ae89-838bfacd94c9"
-    },
-    {
-        "domain": ".mercadolivre.com.br",
-        "expirationDate": 1771382455.254888,
-        "hostOnly": false,
-        "httpOnly": false,
-        "name": "_snoopy",
         "path": "/",
         "sameSite": "no_restriction",
         "secure": true,
         "session": false,
         "storeId": null,
-        "value": "eyJmaW5nZXJwcmludCI6IjUyUUswcDdES25xRWdpMVdFV2c3bzlxaE1FN1kvVlhlSG1PL2VZLzd6ektwNGFkOTJQS1RXR0Y1Zys1ZXgwMVptSjNJaXpKR2d0aTlnVi91cXUrTVdtWmJTS0t4Ty9iYjRRODR2cHR1YzVzNDJidFhJNU5JbHBxK2Q5M3ZyUFdrMlVVQi9BOVp0ZlNMZC9wM1hGMXZodXVieDJpSDhsclo3NXNoMEtNSkJqQUVuT3FocDl3PSIsImtleSI6IjkvSnVsSHBSQ0IvTHd4emQ1c2dMb29vaDN0YVJNQzdjOVdocVZ2VW5UVzJLbkplZ1doamRMaHNxTDgwcFhGZ2ltVE92RTJmcUVSM1ZpRXRLTVZ6bGZHbk1jSjZVVWl5cCJ9"
+        "value": "8696c152-da96-42f2-93d1-714e7ac5957a"
     },
     {
         "domain": ".mercadolivre.com.br",
@@ -276,11 +277,37 @@ const newCookies = [
         "value": "j%3A%7B%7D"
     },
     {
-        "domain": ".lista.mercadolivre.com.br",
-        "expirationDate": 1771798473.475151,
+        "domain": ".www.mercadolivre.com.br",
+        "expirationDate": 1773239193.399731,
         "hostOnly": false,
         "httpOnly": true,
-        "name": "c_Z1laz4H",
+        "name": "c_ui-navigation",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "6.9.0"
+    },
+    {
+        "domain": ".www.mercadolivre.com.br",
+        "expirationDate": 1774023336.800258,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "c_Z1jYmnu",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "1"
+    },
+    {
+        "domain": ".www.mercadolivre.com.br",
+        "expirationDate": 1773697223.850562,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "c_Z2qNAD5",
         "path": "/",
         "sameSite": "no_restriction",
         "secure": true,
@@ -314,7 +341,7 @@ const newCookies = [
     },
     {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1771379937.512867,
+        "expirationDate": 1771455051.537595,
         "hostOnly": false,
         "httpOnly": false,
         "name": "cookiesPreferencesLogged",
@@ -327,7 +354,7 @@ const newCookies = [
     },
     {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1771982937.512967,
+        "expirationDate": 1772058051.537665,
         "hostOnly": false,
         "httpOnly": false,
         "name": "cookiesPreferencesLoggedFallback",
@@ -340,7 +367,7 @@ const newCookies = [
     },
     {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1805938137.24208,
+        "expirationDate": 1806013250.632556,
         "hostOnly": false,
         "httpOnly": true,
         "name": "ftid",
@@ -353,7 +380,7 @@ const newCookies = [
     },
     {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1771379369.88666,
+        "expirationDate": 1771453851.537798,
         "hostOnly": false,
         "httpOnly": false,
         "name": "hide-cookie-banner",
@@ -390,7 +417,7 @@ const newCookies = [
     },
     {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1805938137.241885,
+        "expirationDate": 1806013250.63231,
         "hostOnly": false,
         "httpOnly": false,
         "name": "orgnickp",
@@ -403,7 +430,7 @@ const newCookies = [
     },
     {
         "domain": ".mercadolivre.com.br",
-        "expirationDate": 1805938137.242026,
+        "expirationDate": 1806013250.632466,
         "hostOnly": false,
         "httpOnly": false,
         "name": "orguserid",
@@ -412,9 +439,22 @@ const newCookies = [
         "secure": true,
         "session": false,
         "storeId": null,
-        "value": "0h4900H0HT9"
+        "value": "Hh400HH0HT9"
+    },
+    {
+        "domain": "www.mercadolivre.com.br",
+        "expirationDate": 1772750328,
+        "hostOnly": true,
+        "httpOnly": false,
+        "name": "QSI_SI_d4ikElJeWDP7fzo_intercept",
+        "path": "/",
+        "sameSite": null,
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "true"
     }
-];
+]
 
 /**
  * Mapeia sameSite para o formato do modelo

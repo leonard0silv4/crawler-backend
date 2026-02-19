@@ -6,6 +6,7 @@ const sellerPageSchema = new mongoose.Schema(
     name: { type: String, default: "" },
     uid: { type: String, required: true },
     active: { type: Boolean, default: true },
+    scraping: { type: Boolean, default: false }, // true enquanto o scraper está rodando
     lastRunAt: { type: Date, default: null },
   },
   { timestamps: true }
