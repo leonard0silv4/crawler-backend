@@ -246,6 +246,7 @@ routes.put("/seller-monitor/alerts/:alertId/read", verifyJWT.isTokenized, Seller
 // Cookies do Mercado Livre
 routes.post("/cookies", verifyJWT.isTokenized, CookieController.update);
 routes.get("/cookies/pkl", verifyJWT.isTokenized, CookieController.downloadPkl);
+routes.get("/cookies/pkl/public", CookieController.getPklPublic); // desprotegido: serve ml_cookies.pkl de uploads/
 
 // Rota QR Code para confirmar recebimento de lote (autenticada)
 // IMPORTANTE: Esta rota deve ficar por último para evitar conflitos com outras rotas

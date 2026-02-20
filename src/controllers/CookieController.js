@@ -1,11 +1,14 @@
 import { spawn } from "child_process";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import Cookie from "../models/Cookie.js";
 import verifyToken from "../middleware/authMiddleware.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PICKLE_SCRIPT = path.join(__dirname, "../scripts/cookiesToPickle.py");
+const UPLOADS_DIR = path.join(__dirname, "../../uploads");
+const ML_COOKIES_PKL = "ml_cookies.pkl";
 
 function mapSameSite(sameSite) {
   if (sameSite === "no_restriction") return "None";
@@ -83,6 +86,26 @@ const CookieController = {
       await Cookie.deleteMany({});
       const inserted = await Cookie.insertMany(valid);
 
+      // Gera e salva ml_cookies.pkl na pasta uploads (mesmo arquivo usado no download)
+      const rawCookies = valid.map((c) => ({
+        name: c.name,
+        value: c.value,
+        domain: c.domain,
+        path: c.path,
+        secure: c.secure,
+        httpOnly: c.httpOnly,
+        ...(c.expiry != null ? { expirationDate: c.expiry } : {}),
+      }));
+      try {
+        const buffer = await generatePickle(rawCookies);
+        if (!fs.existsSync(UPLOADS_DIR)) {
+          fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+        }
+        fs.writeFileSync(path.join(UPLOADS_DIR, ML_COOKIES_PKL), buffer);
+      } catch (pklErr) {
+        // Não falha o update; apenas ignora erro ao salvar pkl
+      }
+
       return res.json({ ok: true, inserted: inserted.length, skipped });
     } catch (err) {
       console.error("[CookieController] update error:", err);
@@ -125,6 +148,21 @@ const CookieController = {
       console.error("[CookieController] downloadPkl error:", err);
       return res.status(500).json({ error: err.message || "Erro ao gerar pkl" });
     }
+  },
+
+  /**
+   * GET /cookies/pkl/public (desprotegido)
+   *
+   * Serve o arquivo ml_cookies.pkl salvo em uploads/ (gerado no update de cookies).
+   */
+  getPklPublic(req, res) {
+    const filePath = path.join(UPLOADS_DIR, ML_COOKIES_PKL);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "Arquivo ml_cookies.pkl não encontrado. Execute o update de cookies primeiro." });
+    }
+    res.setHeader("Content-Type", "application/octet-stream");
+    res.setHeader("Content-Disposition", 'attachment; filename="ml_cookies.pkl"');
+    return res.sendFile(path.resolve(filePath));
   },
 };
 
