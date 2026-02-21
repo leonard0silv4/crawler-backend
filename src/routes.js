@@ -237,6 +237,9 @@ routes.get("/seller-monitor/:id/products", verifyJWT.isTokenized, SellerMonitorC
 // Executar scraping manual
 routes.post("/seller-monitor/:id/run", verifyJWT.isTokenized, SellerMonitorController.runScrape);
 
+// Forçar reset de scraping travado
+routes.post("/seller-monitor/:id/reset-stuck", verifyJWT.isTokenized, SellerMonitorController.resetStuck);
+
 // Alertas
 routes.get("/seller-monitor/:id/alerts", verifyJWT.isTokenized, SellerMonitorController.getAlerts);
 routes.put("/seller-monitor/:id/alerts/read-all", verifyJWT.isTokenized, SellerMonitorController.markAllAlertsRead);

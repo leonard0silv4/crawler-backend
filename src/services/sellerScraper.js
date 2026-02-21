@@ -251,132 +251,137 @@ export async function runScraperForSeller(seller) {
   const today = format(new Date(), "yyyy-MM-dd");
   const alertsToCreate = [];
 
-  // Marca o seller como "em scraping" para o frontend poder fazer polling
-  await SellerPage.findByIdAndUpdate(seller._id, { $set: { scraping: true } });
+  // Marca o seller como "em scraping" e registra o horário de início
+  await SellerPage.findByIdAndUpdate(seller._id, {
+    $set: { scraping: true, scrapingStartedAt: new Date() },
+  });
 
   console.log(`[SellerScraper] Iniciando scraping do seller ${seller._id} — ${seller.url}`);
 
-  // --- 1. Coleta todos os produtos ---
-  let scrapedProducts;
   try {
-    scrapedProducts = await scrapeAllPages(seller.url);
-  } catch (err) {
-    console.error(`[SellerScraper] Erro ao scrape seller ${seller._id}:`, err.message);
-    await SellerPage.findByIdAndUpdate(seller._id, { $set: { scraping: false } });
-    return;
-  }
+    // --- 1. Coleta todos os produtos ---
+    let scrapedProducts;
+    try {
+      scrapedProducts = await scrapeAllPages(seller.url);
+    } catch (err) {
+      console.error(`[SellerScraper] Erro ao scrape seller ${seller._id}:`, err.message);
+      return; // finally garante o reset
+    }
 
-  if (!scrapedProducts.length) {
-    console.warn(`[SellerScraper] Nenhum produto encontrado para seller ${seller._id}`);
-    return;
-  }
+    if (!scrapedProducts.length) {
+      console.warn(`[SellerScraper] Nenhum produto encontrado para seller ${seller._id}`);
+      return; // finally garante o reset
+    }
 
-  console.log(
-    `[SellerScraper] Seller ${seller._id}: ${scrapedProducts.length} produtos coletados`
-  );
+    console.log(
+      `[SellerScraper] Seller ${seller._id}: ${scrapedProducts.length} produtos coletados`
+    );
 
-  // --- 2. Reseta flags da execução anterior ---
-  await SellerProduct.updateMany(
-    { sellerId: seller._id },
-    { $set: { isNew: false, priceChanged: false } }
-  );
+    // --- 2. Reseta flags da execução anterior ---
+    await SellerProduct.updateMany(
+      { sellerId: seller._id },
+      { $set: { isNew: false, priceChanged: false } }
+    );
 
-  // --- 3. Processa cada produto coletado ---
-  for (const scraped of scrapedProducts) {
-    const existing = await SellerProduct.findOne({
-      sellerId: seller._id,
-      url: scraped.url,
-    });
-
-    if (!existing) {
-      // ── Produto novo ──
-      let newProduct;
-      try {
-        newProduct = await SellerProduct.create({
-          sellerId: seller._id,
-          url: scraped.url,
-          name: scraped.name,
-          image: scraped.image,
-          sku: scraped.sku,
-          currentPrice: scraped.price,
-          priceHistory: [{ price: scraped.price, date: today }],
-          isNew: true,
-          priceChanged: false,
-        });
-      } catch (err) {
-        // Pode ocorrer duplicate key se houtra execução paralela; ignora
-        if (err.code === 11000) continue;
-        throw err;
-      }
-
-      alertsToCreate.push({
+    // --- 3. Processa cada produto coletado ---
+    for (const scraped of scrapedProducts) {
+      const existing = await SellerProduct.findOne({
         sellerId: seller._id,
-        productId: newProduct._id,
-        productName: scraped.name,
-        type: "new_product",
-        oldPrice: 0,
-        newPrice: scraped.price,
+        url: scraped.url,
       });
-    } else {
-      // ── Produto existente ──
-      let priceHistory = existing.priceHistory.map((h) => ({ ...h }));
-      let priceChanged = false;
 
-      const todayEntryIdx = priceHistory.findIndex((h) => h.date === today);
-
-      if (todayEntryIdx !== -1) {
-        // Mesma data → apenas atualiza o preço do registro de hoje
-        priceHistory[todayEntryIdx] = { price: scraped.price, date: today };
-      } else {
-        // Novo dia → adiciona nova entrada
-        priceHistory.push({ price: scraped.price, date: today });
-        // Mantém máximo de 4 dias (remove o mais antigo se necessário)
-        if (priceHistory.length > 4) {
-          priceHistory = priceHistory.slice(priceHistory.length - 4);
+      if (!existing) {
+        // ── Produto novo ──
+        let newProduct;
+        try {
+          newProduct = await SellerProduct.create({
+            sellerId: seller._id,
+            url: scraped.url,
+            name: scraped.name,
+            image: scraped.image,
+            sku: scraped.sku,
+            currentPrice: scraped.price,
+            priceHistory: [{ price: scraped.price, date: today }],
+            isNew: true,
+            priceChanged: false,
+          });
+        } catch (err) {
+          // Pode ocorrer duplicate key se outra execução paralela; ignora
+          if (err.code === 11000) continue;
+          throw err;
         }
-      }
 
-      if (existing.currentPrice !== scraped.price) {
-        priceChanged = true;
-      }
-
-      await SellerProduct.findByIdAndUpdate(existing._id, {
-        $set: {
-          name: scraped.name,
-          image: scraped.image || existing.image,
-          currentPrice: scraped.price,
-          priceHistory,
-          priceChanged,
-          isNew: false,
-        },
-      });
-
-      if (priceChanged) {
         alertsToCreate.push({
           sellerId: seller._id,
-          productId: existing._id,
+          productId: newProduct._id,
           productName: scraped.name,
-          type: "price_change",
-          oldPrice: existing.currentPrice,
+          type: "new_product",
+          oldPrice: 0,
           newPrice: scraped.price,
         });
+      } else {
+        // ── Produto existente ──
+        let priceHistory = existing.priceHistory.map((h) => ({ ...h }));
+        let priceChanged = false;
+
+        const todayEntryIdx = priceHistory.findIndex((h) => h.date === today);
+
+        if (todayEntryIdx !== -1) {
+          priceHistory[todayEntryIdx] = { price: scraped.price, date: today };
+        } else {
+          priceHistory.push({ price: scraped.price, date: today });
+          if (priceHistory.length > 4) {
+            priceHistory = priceHistory.slice(priceHistory.length - 4);
+          }
+        }
+
+        if (existing.currentPrice !== scraped.price) {
+          priceChanged = true;
+        }
+
+        await SellerProduct.findByIdAndUpdate(existing._id, {
+          $set: {
+            name: scraped.name,
+            image: scraped.image || existing.image,
+            currentPrice: scraped.price,
+            priceHistory,
+            priceChanged,
+            isNew: false,
+          },
+        });
+
+        if (priceChanged) {
+          alertsToCreate.push({
+            sellerId: seller._id,
+            productId: existing._id,
+            productName: scraped.name,
+            type: "price_change",
+            oldPrice: existing.currentPrice,
+            newPrice: scraped.price,
+          });
+        }
       }
     }
+
+    // --- 4. Salva alertas em lote ---
+    if (alertsToCreate.length) {
+      await SellerAlert.insertMany(alertsToCreate);
+    }
+
+    // --- 5. Atualiza data da última execução ---
+    await SellerPage.findByIdAndUpdate(seller._id, {
+      $set: { lastRunAt: new Date() },
+    });
+
+    console.log(
+      `[SellerScraper] Seller ${seller._id}: concluído — ${alertsToCreate.length} alertas gerados`
+    );
+  } finally {
+    // Garante que scraping: false é SEMPRE executado, independente de erros
+    await SellerPage.findByIdAndUpdate(seller._id, {
+      $set: { scraping: false, scrapingStartedAt: null },
+    });
   }
-
-  // --- 4. Salva alertas em lote ---
-  if (alertsToCreate.length) {
-    await SellerAlert.insertMany(alertsToCreate);
-  }
-
-  // --- 5. Atualiza data da última execução e libera o flag de scraping ---
-  await SellerPage.findByIdAndUpdate(seller._id, {
-    $set: { lastRunAt: new Date(), scraping: false },
-  });
-
-  console.log(
-    `[SellerScraper] Seller ${seller._id}: concluído — ${alertsToCreate.length} alertas gerados`
-  );
 }
 
 /**

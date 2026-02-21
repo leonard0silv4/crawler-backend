@@ -4,6 +4,7 @@ import SellerAlert from "../models/SellerAlert.js";
 import verifyToken from "../middleware/authMiddleware.js";
 import { runScraperForSeller } from "../services/sellerScraper.js";
 import { enqueueSellerScrape, isSellerPending } from "../services/scraperQueue.js";
+import { resetStaleByTimeout } from "../services/scraperQueue.js";
 
 const SellerMonitorController = {
   /**
@@ -144,8 +145,9 @@ const SellerMonitorController = {
       }
 
       // Marca como scraping imediatamente para o frontend mostrar o indicador
-      // mesmo enquanto o job aguarda na fila
-      await SellerPage.findByIdAndUpdate(seller._id, { $set: { scraping: true } });
+      await SellerPage.findByIdAndUpdate(seller._id, {
+        $set: { scraping: true, scrapingStartedAt: new Date() },
+      });
 
       enqueueSellerScrape(seller, runScraperForSeller);
 
@@ -191,6 +193,32 @@ const SellerMonitorController = {
     } catch (err) {
       console.error("[SellerMonitor] markAlertRead error:", err);
       return res.status(500).json({ error: "Erro ao marcar alerta" });
+    }
+  },
+
+  /**
+   * Força o reset do flag scraping de um seller específico.
+   * Útil quando o scraping trava e o usuário precisa desbloqueá-lo manualmente.
+   */
+  async resetStuck(req, res) {
+    try {
+      const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);
+      const uid = role === "owner" ? userId : ownerId;
+
+      const { id } = req.params;
+      const seller = await SellerPage.findOne({ _id: id, uid: String(uid) });
+      if (!seller)
+        return res.status(404).json({ error: "Seller não encontrado" });
+
+      await SellerPage.findByIdAndUpdate(seller._id, {
+        $set: { scraping: false, scrapingStartedAt: null },
+      });
+
+      console.log(`[SellerMonitor] Reset manual de scraping travado: seller ${id}`);
+      return res.json({ ok: true, message: "Scraping resetado com sucesso" });
+    } catch (err) {
+      console.error("[SellerMonitor] resetStuck error:", err);
+      return res.status(500).json({ error: "Erro ao resetar scraping" });
     }
   },
 

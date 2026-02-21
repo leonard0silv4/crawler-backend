@@ -81,11 +81,29 @@ export function getQueueStats() {
 export async function resetStaleScrapingFlags() {
   const result = await SellerPage.updateMany(
     { scraping: true },
-    { $set: { scraping: false } }
+    { $set: { scraping: false, scrapingStartedAt: null } }
   );
   if (result.modifiedCount > 0) {
     console.log(
       `[ScraperQueue] ${result.modifiedCount} seller(s) com scraping travado foram resetados.`
     );
   }
+}
+
+/**
+ * Reseta sellers cujo scraping está ativo há mais do que `timeoutMinutes`.
+ * Chamado periodicamente pelo cron para liberar travas silenciosas.
+ */
+export async function resetStaleByTimeout(timeoutMinutes = 30) {
+  const cutoff = new Date(Date.now() - timeoutMinutes * 60 * 1000);
+  const result = await SellerPage.updateMany(
+    { scraping: true, scrapingStartedAt: { $lt: cutoff } },
+    { $set: { scraping: false, scrapingStartedAt: null } }
+  );
+  if (result.modifiedCount > 0) {
+    console.warn(
+      `[ScraperQueue] Auto-reset: ${result.modifiedCount} seller(s) travados há mais de ${timeoutMinutes}min foram liberados.`
+    );
+  }
+  return result.modifiedCount;
 }

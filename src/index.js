@@ -9,7 +9,7 @@ import http from "http";
 import CronController from "./controllers/CronController.js";
 import { fetchAndStoreMonthlySummary } from "./services/fetchMonthlyBaseLinker.js";
 import { runAllActiveSellers } from "./services/sellerScraper.js";
-import { resetStaleScrapingFlags } from "./services/scraperQueue.js";
+import { resetStaleScrapingFlags, resetStaleByTimeout } from "./services/scraperQueue.js";
 
 
 dotenv.config({ path: "../.env" });
@@ -34,9 +34,10 @@ mongoose
   .catch((err) => console.error("Erro ao conectar ao MongoDB:", err));
 
 // Cron job
-cron.schedule("*/30 * * * *", () => {
+cron.schedule("*/30 * * * *", async () => {
   console.log("Executando Cron Job...");
   CronController.cronUsers();
+  await resetStaleByTimeout(30);
 });
 
 //  cron.schedule("*/1 * * * *", async () => {
