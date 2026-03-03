@@ -25,6 +25,7 @@ import NfController from './controllers/NfController.js';
 import XmlController from './controllers/XmlController.js';
 import SellerMonitorController from './controllers/SellerMonitorController.js';
 import CookieController from './controllers/CookieController.js';
+import CatalogProductController from './controllers/CatalogProductController.js';
 
 const routes = express.Router();
 
@@ -117,6 +118,7 @@ routes.get('/runcron', CronController.cronUserMeli);
 routes.get('/callback', MeliController.authCallback);
 routes.get('/accounts/', verifyJWT.isTokenized, MeliController.getAccounts);
 routes.get('/accounts/products', verifyJWT.isTokenized, MeliController.listarProdutos);
+routes.get('/meli/shipment/:shipmentId', verifyJWT.isTokenized, MeliController.getShipment);
 routes.post('/callback/api/hook', async (req, res) => {
   res.json({
     date: new Date(),
@@ -245,6 +247,13 @@ routes.get("/seller-monitor/:id/alerts", verifyJWT.isTokenized, SellerMonitorCon
 routes.put("/seller-monitor/:id/alerts/read-all", verifyJWT.isTokenized, SellerMonitorController.markAllAlertsRead);
 routes.put("/seller-monitor/alerts/:alertId/read", verifyJWT.isTokenized, SellerMonitorController.markAlertRead);
 
+
+// Catálogo de Produtos (dimensões e peso cúbico)
+routes.get("/catalog", verifyJWT.isTokenized, CatalogProductController.index);
+routes.post("/catalog", verifyJWT.isTokenized, CatalogProductController.store);
+routes.put("/catalog/:id", verifyJWT.isTokenized, CatalogProductController.update);
+routes.delete("/catalog/:id", verifyJWT.isTokenized, CatalogProductController.destroy);
+routes.post("/catalog/import", verifyJWT.isTokenized, CatalogProductController.importFromXLS);
 
 // Cookies do Mercado Livre
 routes.post("/cookies", verifyJWT.isTokenized, CookieController.update);
