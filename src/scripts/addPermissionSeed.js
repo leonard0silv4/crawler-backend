@@ -6,8 +6,8 @@ import Role from "../models/Role.js";
 
 dotenv.config({ path: "../../.env" });
 
-const permissionName = 'catalog_product_'
-const permissionDescription = 'Tela cadastro e controle de peso dos produtos'
+const permissionName = 'catalog_product_edit'
+const permissionDescription = 'Editar cadastro de produtos do catálogo'
 
 async function addNewPermission() {
   try {
