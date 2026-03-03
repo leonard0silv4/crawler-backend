@@ -65,6 +65,7 @@ async function run() {
     toInsert.push({
       sku1,
       sku2: (row["SKU-2"] || "").toString().trim(),
+      sku3: (row["SKU-3"] || "").toString().trim(),
       produto: (row["PRODUTO"] || "").toString().trim(),
       medidas: (row["MEDIDAS"] || "").toString().trim(),
       largura,

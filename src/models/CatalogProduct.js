@@ -4,6 +4,7 @@ const CatalogProductSchema = new mongoose.Schema(
   {
     sku1: { type: String, required: true, unique: true },
     sku2: { type: String, default: "" },
+    sku3: { type: String, default: "" },
     produto: { type: String, required: true },
     medidas: { type: String, required: true },
     largura: { type: Number, required: true },
@@ -39,6 +40,7 @@ CatalogProductSchema.pre("findOneAndUpdate", function (next) {
 
 CatalogProductSchema.index({ sku1: 1 });
 CatalogProductSchema.index({ sku2: 1 });
+CatalogProductSchema.index({ sku3: 1 });
 CatalogProductSchema.index({ medidas: 1 });
 
 export default mongoose.model("CatalogProduct", CatalogProductSchema);

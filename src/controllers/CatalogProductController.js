@@ -20,6 +20,7 @@ export default {
         query.$or = [
           { sku1: { $regex: search, $options: "i" } },
           { sku2: { $regex: search, $options: "i" } },
+          { sku3: { $regex: search, $options: "i" } },
           { medidas: { $regex: search, $options: "i" } },
           { produto: { $regex: search, $options: "i" } },
         ];
@@ -53,11 +54,12 @@ export default {
 
   async store(req, res) {
     try {
-      const { sku1, sku2, produto, medidas, largura, comprimento, altura, peso } = req.body;
+      const { sku1, sku2, sku3, produto, medidas, largura, comprimento, altura, peso } = req.body;
 
       const product = new CatalogProduct({
         sku1,
         sku2,
+        sku3,
         produto,
         medidas,
         largura,
@@ -80,11 +82,11 @@ export default {
   async update(req, res) {
     try {
       const { id } = req.params;
-      const { sku1, sku2, produto, medidas, largura, comprimento, altura, peso } = req.body;
+      const { sku1, sku2, sku3, produto, medidas, largura, comprimento, altura, peso } = req.body;
 
       const product = await CatalogProduct.findByIdAndUpdate(
         id,
-        { sku1, sku2, produto, medidas, largura, comprimento, altura, peso },
+        { sku1, sku2, sku3, produto, medidas, largura, comprimento, altura, peso },
         { new: true, runValidators: true }
       );
 
@@ -161,6 +163,7 @@ export default {
           toInsert.push({
             sku1,
             sku2: (row["SKU-2"] || "").toString().trim(),
+            sku3: (row["SKU-3"] || "").toString().trim(),
             produto: (row["PRODUTO"] || "").toString().trim(),
             medidas: (row["MEDIDAS"] || "").toString().trim(),
             largura,
