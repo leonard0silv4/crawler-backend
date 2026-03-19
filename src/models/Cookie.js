@@ -31,7 +31,7 @@ const CookieSchema = new mongoose.Schema(
     },
     sameSite: {
       type: String,
-      enum: ["Strict", "Lax", "None", null],
+      enum: ["Strict", "Lax", "None", "strict", "lax", "none", null],
       default: null,
     },
   },
