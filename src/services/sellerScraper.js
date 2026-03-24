@@ -28,6 +28,18 @@ function cleanUrl(url) {
   }
 }
 
+/** Alertas de mudança de preço só se |Δ|/preço anterior > 1% (estrito). */
+const MIN_PRICE_CHANGE_ALERT_RATIO = 0.01;
+
+function isSignificantPriceChangeForAlert(oldPrice, newPrice) {
+  if (oldPrice === newPrice) return false;
+  if (!Number.isFinite(oldPrice) || !Number.isFinite(newPrice)) {
+    return oldPrice !== newPrice;
+  }
+  if (oldPrice <= 0) return newPrice !== oldPrice;
+  return Math.abs(newPrice - oldPrice) / oldPrice > MIN_PRICE_CHANGE_ALERT_RATIO;
+}
+
 /**
  * Número de itens por página do Mercado Livre (páginas de loja/tienda).
  */
@@ -335,7 +347,7 @@ export async function runScraperForSeller(seller) {
           }
         }
 
-        if (existing.currentPrice !== scraped.price) {
+        if (isSignificantPriceChangeForAlert(existing.currentPrice, scraped.price)) {
           priceChanged = true;
         }
 
