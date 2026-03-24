@@ -13,6 +13,7 @@ const sellerAlertSchema = new mongoose.Schema(
       default: null,
     },
     productName: { type: String, default: "" },
+    productUrl: { type: String, default: "" },
     type: {
       type: String,
       enum: ["price_change", "new_product"],
