@@ -249,6 +249,7 @@ routes.put("/seller-monitor/alerts/:alertId/read", verifyJWT.isTokenized, Seller
 
 
 // Catálogo de Produtos (dimensões e peso cúbico)
+routes.get("/catalog/export", verifyJWT.isTokenized, CatalogProductController.exportToXLS);
 routes.get("/catalog", verifyJWT.isTokenized, CatalogProductController.index);
 routes.post("/catalog", verifyJWT.isTokenized, CatalogProductController.store);
 routes.put("/catalog/:id", verifyJWT.isTokenized, CatalogProductController.update);

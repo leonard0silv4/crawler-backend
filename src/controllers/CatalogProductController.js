@@ -113,6 +113,40 @@ export default {
     }
   },
 
+  async exportToXLS(req, res) {
+    try {
+      const products = await CatalogProduct.find({}).sort({ createdAt: -1 }).lean();
+
+      const rows = products.map((p) => ({
+        "SKU-1": p.sku1,
+        "SKU-2": p.sku2 || "",
+        "SKU-3": p.sku3 || "",
+        PRODUTO: p.produto,
+        MEDIDAS: p.medidas,
+        LARG: p.largura,
+        COMP: p.comprimento,
+        ALTURA: p.altura,
+        KG: p.peso,
+      }));
+
+      const wb = xlsx.utils.book_new();
+      const ws = xlsx.utils.json_to_sheet(rows);
+      xlsx.utils.book_append_sheet(wb, ws, "Catalogo");
+
+      const buffer = xlsx.write(wb, { type: "buffer", bookType: "xlsx" });
+
+      res.setHeader("Content-Disposition", 'attachment; filename="catalogo.xlsx"');
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      return res.send(buffer);
+    } catch (err) {
+      console.error("Erro ao exportar catálogo:", err);
+      return res.status(500).json({ error: "Erro ao exportar produtos." });
+    }
+  },
+
   async importFromXLS(req, res) {
     upload.single("file")(req, res, async (err) => {
       if (err) {
