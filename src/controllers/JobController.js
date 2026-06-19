@@ -242,8 +242,8 @@ const JobController = {
       let orcamento = totMetros * custoPorMetro;
 
       job.qtdRolo = (
-        ((larg * 2 + compr * 2) * qtd) /
-        50
+        ((larg * 2 + (larg * 2 + compr * 2) * 0.35) * qtd) /
+        48
       ).toFixed(2);
 
 
