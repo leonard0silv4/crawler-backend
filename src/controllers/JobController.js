@@ -178,6 +178,9 @@ const JobController = {
         // Atualiza os valores no job
         job.totMetros = parseFloat(totMetros.toFixed(2));
         job.orcamento = parseFloat(orcamento.toFixed(2));
+
+        // Metros de alça = totMetros do lote * medida por alça; rolos = metros de alça / metros por rolo
+        job.qtdRolo = parseFloat(((totMetros * 0.35) / 48).toFixed(2));
       }
 
 
@@ -241,12 +244,6 @@ const JobController = {
       // Ajusta orçamento com base na emenda
       let orcamento = totMetros * custoPorMetro;
 
-      job.qtdRolo = (
-        ((larg * 2 + (larg * 2 + compr * 2) * 0.35) * qtd) /
-        48
-      ).toFixed(2);
-
-
       if (job.emenda) {
         // Adiciona custo da emenda e ajusta totMetros
         totMetros = (larg * 2 + compr * 3) * qtd;
@@ -256,6 +253,9 @@ const JobController = {
       // Atualiza os valores no job
       job.totMetros = parseFloat(totMetros.toFixed(2));
       job.orcamento = parseFloat(orcamento.toFixed(2));
+
+      // Metros de alça = totMetros do lote * medida por alça; rolos = metros de alça / metros por rolo
+      job.qtdRolo = parseFloat(((totMetros * 0.35) / 48).toFixed(2));
 
 
 
