@@ -514,6 +514,54 @@ const JobController = {
 
   },
 
+  async applyBonus(req, res) {
+    const { ids, percentage } = req.body;
+    const userId = await verifyToken.recoverUid(req, res);
+
+    const percentageNum = Number(percentage);
+    if (
+      !Array.isArray(ids) ||
+      ids.length === 0 ||
+      !Number.isFinite(percentageNum) ||
+      percentageNum < 0 ||
+      percentageNum > 100
+    ) {
+      return res.status(400).json({ error: "Parâmetros inválidos para aplicação de bônus." });
+    }
+
+    try {
+      // Busca e atualiza todos os Jobs correspondentes
+      const jobs = await Job.find({ _id: { $in: ids } });
+      if (!jobs || jobs.length === 0) {
+        return res.status(404).json({ error: "Nenhum job encontrado." });
+      }
+
+      // Aplica o percentual proporcionalmente ao orçamento de cada job
+      for (const job of jobs) {
+        const oldValue = job.bonus;
+        job.bonus = parseFloat(((job.orcamento || 0) * percentageNum / 100).toFixed(2));
+        await job.save();
+        await LogController.logJobChange({
+          jobId: job._id,
+          userId,
+          action: "update",
+          field: "bonus",
+          oldValue,
+          newValue: job.bonus,
+          req,
+          res
+        });
+
+        JobController.emitSSE("jobUpdated", { job });
+      }
+
+      return res.json({ message: "Bônus aplicado com sucesso.", jobs });
+    } catch (error) {
+      console.error("Erro ao aplicar bônus:", error);
+      return res.status(500).json({ error: "Erro ao aplicar bônus." });
+    }
+  },
+
   async listBatchesReceivedToday(req, res) {
     try {
       const { userId, role, ownerId } = await verifyToken.recoverAuth(req, res);

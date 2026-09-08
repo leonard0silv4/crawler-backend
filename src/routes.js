@@ -101,6 +101,7 @@ routes.put("/jobs/rate", verifyJWT.isTokenized, JobController.updateRate);
 routes.get("/jobs/rate/:id", verifyJWT.isTokenized, JobController.indexRate);
 routes.put("/jobs/observacao", verifyJWT.isTokenized, JobController.updateObservacao);
 routes.put("/jobs/splitAdvancedMoney", verifyJWT.isTokenized, JobController.updateJobHasSplit);
+routes.put("/jobs/applyBonus", verifyJWT.isTokenized, JobController.applyBonus);
 routes.get("/jobs/received-today", verifyJWT.isTokenized, JobController.listBatchesReceivedToday);
 routes.post("/jobs/mark-received", verifyJWT.isTokenized, JobController.markBatchAsReceived);
 

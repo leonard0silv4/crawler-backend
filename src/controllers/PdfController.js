@@ -77,7 +77,7 @@ export default {
         });
         const medidas = `${job.larg}x${job.compr}`;
         const metros = job.totMetros.toFixed(0);
-        const preco = `R$${job.orcamento.toFixed(2)}`;
+        const preco = `R$${(job.orcamento + (job.bonus || 0)).toFixed(2)}`;
 
         doc
           .font("Helvetica")
@@ -103,7 +103,8 @@ export default {
 
       // Totals section
       const totalMetros = jobs.reduce((sum, job) => sum + job.totMetros, 0);
-      const totalValor = jobs.reduce((sum, job) => sum + job.orcamento, 0);
+      const totalBonus = jobs.reduce((sum, job) => sum + (job.bonus || 0), 0);
+      const totalValor = jobs.reduce((sum, job) => sum + job.orcamento + (job.bonus || 0), 0);
 
       // Draw top line
       const footerStartY = doc.y;
@@ -120,6 +121,16 @@ export default {
         .fontSize(11)
         .text(totalMetrosText, 50, doc.y, { align: "left" });
       doc.moveDown(0.4);
+
+      // Bônus total line (only when a bonus was applied)
+      if (totalBonus > 0) {
+        const bonusTotalText = `| Bônus aplicado : R$${totalBonus.toFixed(2)}`;
+        doc
+          .font("Helvetica")
+          .fontSize(11)
+          .text(bonusTotalText, 50, doc.y, { align: "left" });
+        doc.moveDown(0.4);
+      }
 
       // Valor total line
       const valorTotalText = `| Valor total : R$${totalValor.toFixed(2)}`;

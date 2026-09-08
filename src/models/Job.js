@@ -26,6 +26,7 @@ const jobSchema = new mongoose.Schema({
   qtdRolo: { type: Number },
   rateLote: { type: Number },
   advancedMoneyPayment: { type: Number },
+  bonus: { type: Number, default: 0 },
   observacao: { type: String },
   isArchived: { type: Boolean, default: false },
   faccionistaId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
